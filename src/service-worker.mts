@@ -1,6 +1,6 @@
-import { Conversation, Turn, DateString, Citation, Search, Result } from '@bric/rex-types/types'
+import { Conversation, Turn, DateString, Citation, Search } from '@bric/rex-types/types'
 
-import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
+import rexCorePlugin, { EventPayload } from '@bric/rex-core/service-worker'
 import rexSpiderPlugin, { REXSpider } from '@bric/rex-spider/service-worker'
 
 export class REXChatGoogleAISpider extends REXSpider {
@@ -105,16 +105,16 @@ export class REXChatGoogleAISpider extends REXSpider {
     })
   }
 
-  parseConversationOff(conversationJson):Promise<any|null> {
+  parseConversationOff(conversationJson):Promise<any|null> { // eslint-disable-line @typescript-eslint/no-explicit-any
     return new Promise((resolve) => {
       console.log(`[rex-spider-chatgpt] parseConversation:`)
       console.log(conversationJson)
 
-      let firstWhen = new Date(conversationJson['create_time'] * 1000)
+      const firstWhen = new Date(conversationJson['create_time'] * 1000)
 
-      let latestDate = firstWhen
+      const latestDate = firstWhen
 
-      let firstWhenString:DateString = new DateString(conversationJson['create_time'])
+      const firstWhenString:DateString = new DateString(conversationJson['create_time'])
 
       const conversation:Conversation = {
         turns:[],

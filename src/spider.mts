@@ -1,5 +1,3 @@
-import $ from 'jquery'
-
 import rexSpiderManager, { REXContentSpider } from '@bric/rex-spider/spider'
 
 export class REXGoogleAIContentSpider extends REXContentSpider {
@@ -11,7 +9,7 @@ export class REXGoogleAIContentSpider extends REXContentSpider {
     return 'Google AI'
   }
 
-  urlMatches(url:string): boolean {
+  urlMatches(url:string): boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
     return false
   }
 
