@@ -41,7 +41,7 @@
         "chrome-types": "^0.1.387",
         "esbuild": "^0.27.2",
         "eslint": "^9.39.1",
-        "globals": "^16.5.0",
+        "globals": "^17.5.0",
         "jiti": "^2.6.1",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.46.3"
