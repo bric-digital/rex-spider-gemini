@@ -1,0 +1,19 @@
+{
+    "configuration_url": "config.json",
+    "identifier": "rex-spider-google-api-test",
+    "content_processing": {
+        "regexp": [{
+            "pattern": "hello",
+            "replacement": "hola"
+        }, {
+            "pattern": "\\d",
+            "replacement": "*"
+        }],
+        "sanitize_pii": {}
+    },
+    "ui": [{
+        "title": "REX Spider: Google AI Testing Extension",
+        "identifier": "main",
+        "default": true
+    }]
+}

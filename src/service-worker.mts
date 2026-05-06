@@ -99,11 +99,63 @@ export class REXChatGoogleAISpider extends REXSpider {
                 response.text().then((rawResponse) => {
                   console.log(`[rex-spider-google-ai] Fetched list payload (${response.status}: ${response.statusText}):`)
                   console.log(rawResponse)
+                  const conversations = this.parseListResponse(rawResponse)
                 })
               }
             })
         })
       })
+    })
+  }
+
+  parseListResponse(rawContent:string):Promise<any|null> {
+    const cleanedResponse = rawContent.substring(6)
+
+    console.log(cleanedResponse)
+
+    const responseObject = JSON.parse(cleanedResponse)
+
+    console.log('responseObject')
+    console.log(responseObject)
+
+    const pending = [... responseObject[0]]
+
+    const parsed = []
+
+    return new Promise((resolve) => {
+      const nextConvo = () => {
+        if (pending.length == 0) {
+          resolve(parsed)
+        }
+
+        const next = pending.pop()
+
+        this.parseConversation(next)
+          .then((parsedConvo) => {
+            parsed.push(parsedConvo)
+
+            nextConvo()
+          })
+      }
+
+      nextConvo()
+    })
+  }
+
+  parseConversation(conversationJson:any):Promise<any|null> {
+    return new Promise((resolve) => {
+      const conversation:Conversation = {
+        turns: [],
+        platform: 'google-ai',
+        identifier: `${conversationJson[0][0]}_${conversationJson[0][1]}`,
+        started: new DateString(conversationJson[5][0]),
+        metadata: {
+          'title*': conversationJson[1],
+          'src': conversationJson
+        }
+      }
+
+      resolve(conversation)
     })
   }
 

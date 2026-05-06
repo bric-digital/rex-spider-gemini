@@ -1,0 +1,113 @@
+[
+    [
+        [
+            // https://www.google.com/search?udm=50&utm_source=google&utm_campaign=aim_aware&utm_content=aim_bigsplash&authuser=0&mstk=AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk&mtid=cR3pacWdJp6JptQPzN3LwA4&csuir=1&aep=26&q=%22google+chrome+for+testing%22+ignoring+declarative+net+blocks&ved=0CAAQ2_wOahcKEwi4iMfViaWUAxUAAAAAHQAAAAAQGA&atvm=2
+            // https://www.google.com/async/folwr?garc=ChswYTdtYUNBOFk5TU5SSlkySGowSXlUd2p1UmsSF0xHMzdhZXlOTU5icW1MUVB4S3Vsa1FnGgtMTEZDd1FOZVZuYw&mlro=0a7frb3Gb6iDuKZXAmyD8_RlPEcAoNcPFdxU3B9sU2JT8NmpcfF2f5R8mGZPxzD9btL8hZildc15DW_L6QUkgrsXqyfjMFWUlU0g5JPwtZ7lYQdSOb_ksktw66DGexefjgPMyPGW&mlros=zGjs8o27Dao&ei=LG37aeyNMNbqmLQPxKulkQg&q=%22google+chrome+for+testing%22+ignoring+declarative+net+blocks&yv=3&vet=12ahUKEwjs04K1i6WUAxVWNYYAHcRVKYIQ_ZkOegYIAQgAEBg..i&ved=2ahUKEwjs04K1i6WUAxVWNYYAHcRVKYIQ_ZkOegYIAQgAEBg&aep=26&authuser=0&udm=50&stkp=Afn5iiXKAfabE_3YvfP3mcVCRLB-jvc251cXyYycVEyQOom6UywtwZ9lVmUejdrXPaVuPibQmNBEOKFu83CcIIopJhVLi0txt_fL0Qbez2qfUYNxJKfQIjItMQ%3D%3D&cs=0&mstk=AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk&csuir=1&elrc=CmowYTY4cEhNd01jVTVUcmhDUlUxRjVtbE94bW96MEd2aE5NcFhmQnB6Uk9VSnpQNXNSWXdOOXpfU3RIM3kwLURHczBMV3ZjcE1mZEtvaGtkdDBSc2dQbkNIQ2Rod29MQzZaeUhxdEJOV2N3EhdMRzM3YWV5Tk1OYnFtTFFQeEt1bGtRZxoLMDFUM0thc2ZFckE&async=_fmt:adl,_xsrf:AKPOr1QgBywOgaKjIYE1N1kFFQo4KoXJKQ%3A1778085165149
+
+            [
+                "AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk",
+                "cR3pacWdJp6JptQPzN3LwA4"
+            ],
+            "\"google chrome for testing\" ignoring declarative net blocks",
+            null,
+            0,
+            null,
+            [
+                1776885105,
+                370959000
+            ],
+            [
+                1776885105,
+                883538000
+            ],
+            null,
+            null,
+            null,
+            "do it",
+            0,
+            "do it",
+            null,
+            null,
+            null,
+            null,
+            0,
+            0,
+            null,
+            "\"google chrome for testing\" ignoring declarative net blocks",
+            null,
+            [
+                [
+                    "mstk",
+                    "AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk"
+                ],
+                [
+                    "mtid",
+                    "cR3pacWdJp6JptQPzN3LwA4"
+                ],
+                [
+                    "csuir",
+                    "1"
+                ],
+                [
+                    "udm",
+                    "50"
+                ]
+            ],
+            1,
+            "Apr 22"
+        ],
+        [
+            [
+                "AUtExfB-oc66s1p8Zl6qYOYNrXel3t5HVrllKSt22horPo-Gf4ssxglaQmADzrpA7ZtR5zzUbYYdfcNyOySZQEVYX7m6X_qAKuWZPdgdB6vm2ltiD0ZSE57LfqmaQ9EluWEc6CGHB_URPuxPoWKjR-5JbBmb7Zr-V---jIoqMMq96ndA7-ovXmIdibRD9VhnKV-Jv-4T5JkBEBIMnt0t4Lsj_dedgCInyNRGovCAoK6ku6uOfTe_1KrXl_A1mztQddaRlrOifqxE1Tf6Do8m0ysUIO0VIobiUMQnw3oRrQ_hwClsQeqYDi5dxkjwx48APoKYx8X9W7zKae05HQ",
+                "MBzpaeOXMamlptQPz-e66Ao"
+            ],
+            "Test Declarative Net Blocks Playwright",
+            null,
+            0,
+            null,
+            [
+                1776884784,
+                547499000
+            ],
+            [
+                1776884784,
+                805859000
+            ],
+            null,
+            null,
+            null,
+            null,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            0,
+            0,
+            null,
+            "test declarative net blocks playwright chrome",
+            "Test Declarative Net Blocks Playwright",
+            [
+                [
+                    "mstk",
+                    "AUtExfB-oc66s1p8Zl6qYOYNrXel3t5HVrllKSt22horPo-Gf4ssxglaQmADzrpA7ZtR5zzUbYYdfcNyOySZQEVYX7m6X_qAKuWZPdgdB6vm2ltiD0ZSE57LfqmaQ9EluWEc6CGHB_URPuxPoWKjR-5JbBmb7Zr-V---jIoqMMq96ndA7-ovXmIdibRD9VhnKV-Jv-4T5JkBEBIMnt0t4Lsj_dedgCInyNRGovCAoK6ku6uOfTe_1KrXl_A1mztQddaRlrOifqxE1Tf6Do8m0ysUIO0VIobiUMQnw3oRrQ_hwClsQeqYDi5dxkjwx48APoKYx8X9W7zKae05HQ
+                ],
+                [
+                    "mtid",
+                    "MBzpaeOXMamlptQPz-e66Ao"
+                ],
+                [
+                    "csuir",
+                    "1"
+                ],
+                [
+                    "udm",
+                    "50"
+                    ]
+                ],
+                1,
+                "Apr 22"
+                ],
+                [
+                    ["AUtExfDN-cnMuCnof2qprpIDXksfP7SLLtMkxBnvLT1vSpbJCjTLsyvfx0OH1m1r85yNDLT7XkzhGKFa0t3ZAXC0IbfoafC6FRSl17VsfqnTL__eISVKcwibjXqLYghb778Cd8gyF7OmNhwqasC2mfbDmdKhHvDBMTdrbk843AckB2emaQKQLVOFyclo14rzJBEuBzZYgd6OiuBUgM979btlOSlY5duIZE_Wulzoy0LcUc5Xj1iYEQnmrMg8ufiu_5a-wQrK1bAQRqoX5jIl9XQs19TztP9Wnxzy_GNvO10RCHIsUxRwX4CXsrN3Rj25dJtKCeRNFBbsEyOhxA","qqzfaeeOF-Ce5NoP2bfv6Qk"],"Gemini vs Google Search AI",null,0,null,[1776266410,148817000],[1776266410,378727000],null,null,null,null,0,null,null,null,null,null,0,0,null,"difference between gemini and google search AI","Gemini vs Google Search AI",[["mstk","AUtExfDN-cnMuCnof2qprpIDXksfP7SLLtMkxBnvLT1vSpbJCjTLsyvfx0OH1m1r85yNDLT7XkzhGKFa0t3ZAXC0IbfoafC6FRSl17VsfqnTL__eISVKcwibjXqLYghb778Cd8gyF7OmNhwqasC2mfbDmdKhHvDBMTdrbk843AckB2emaQKQLVOFyclo14rzJBEuBzZYgd6OiuBUgM979btlOSlY5duIZE_Wulzoy0LcUc5Xj1iYEQnmrMg8ufiu_5a-wQrK1bAQRqoX5jIl9XQs19TztP9Wnxzy_GNvO10RCHIsUxRwX4CXsrN3Rj25dJtKCeRNFBbsEyOhxA"],["mtid","qqzfaeeOF-Ce5NoP2bfv6Qk"],["csuir","1"],["udm","50"]],1,"Apr 15"],[["AUtExfDPSkXM5LjpWtbEvxUc56Ov7KFYYk6PlutFBOA9fP8VH6uVf2xqDB-tGhxbLWNzFEp1R-N1srdgROHl8AXKewertLqnh2nTYMBUAD-yRFd_shGgJ3sqMAO5abv7UupwMCtx-BdoupeByq3j7KcxACG8SBP5D9BIcGQmysSXH7Xo95HtfZCPletETUpiNcKcw_UjE-9yX00I7qBR1wGj_BAJCLortmDinvx3jHbah6gocb_6kOCks379T37uTukcjEMBcJ__ziyUT0sd75f1rOq7NNBOno0sOVzroD6OwQRzzboZFE39qHM9ZCh9f-osBd0UJorIvn_njQ","Cavfad3CNeHk5NoP883C6Ac"],"Gemini vs Google Search AI",null,0,null,[1776265993,676422000],[1776265993,876893000],null,null,null,null,0,null,null,null,null,null,0,0,null,"difference between gemini and google search ai","Gemini vs Google Search AI",[["mstk","AUtExfDPSkXM5LjpWtbEvxUc56Ov7KFYYk6PlutFBOA9fP8VH6uVf2xqDB-tGhxbLWNzFEp1R-N1srdgROHl8AXKewertLqnh2nTYMBUAD-yRFd_shGgJ3sqMAO5abv7UupwMCtx-BdoupeByq3j7KcxACG8SBP5D9BIcGQmysSXH7Xo95HtfZCPletETUpiNcKcw_UjE-9yX00I7qBR1wGj_BAJCLortmDinvx3jHbah6gocb_6kOCks379T37uTukcjEMBcJ__ziyUT0sd75f1rOq7NNBOno0sOVzroD6OwQRzzboZFE39qHM9ZCh9f-osBd0UJorIvn_njQ"],["mtid","Cavfad3CNeHk5NoP883C6Ac"],["csuir","1"],["udm","50"]],1,"Apr 15"],[["AUtExfA6bOC5R1aN0OwdmGT2grzAnuY_2CeAdjJNCS8PUI4C1zFHdMV8jWi-A2iKjwH9QJ8u0oF7lyNt2fIA_Vl2RYTMZ49T1hLVLaiomLN8Nv91wonQRguV2uQWrRrX4WN2IFcD57RmJM41bc19zkDpr7BrCjT6JlKx-Q02rJzBr02FwaioOORO-B0qWtUzBr3dxVX_sJT8SWXCPNeoL-qDrNdxmQ4ec6o1h6hFX_oIMmSTdaaFO_Xl7P4lTy9u-GGbJgLhMhUWesc5KNyMHXAGh6qA7LgLXOoznw3QjYwbejSaeXOsZmk3IKRFmHfPEwq_jDoAird8DUYBOw","sKrfaf2kMvSy5NoPp-CiyQs"],"Gemini vs Google Search AI",null,0,null,[1776265904,591265000],[1776265904,823933000],null,null,null,null,0,null,null,null,null,null,0,0,null,"difference between gemini and google search ai","Gemini vs Google Search AI",[["mstk","AUtExfA6bOC5R1aN0O

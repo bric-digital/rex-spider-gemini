@@ -1,0 +1,77 @@
+https://www.google.com/async/folwr?garc=ChswYTZaMmhDU1pmZFlLZEg1aTFhRzJqdjJvUFUSF0E3cjdhWnV5TmEybnJ1RVBxcUQwNlFnGgthdVNXZDFuTHA0bw&
+mlro=0a6s_26ilG8JqVdlH0H9hX9-lKVl1NRJA2YqomePU4pzefOmOdmJDt1mH6ktFaZ9jXFlSvrQHSjLyFC5gmm5y572D8clEC_f6eqJd3xqjjLww0dspp4H4jmPLkVIhyIQsNgRHfQf&
+mlros=-DGKcEEsDvM&
+ei=A7r7aZuyNa2nruEPqqD06Qg&
+q=%22google+chrome+for+testing%22+ignoring+declarative+net+blocks&
+yv=3&
+vet=12ahUKEwjbv_bY1KWUAxWtkysGHSoQPY0Q_ZkOegYIAQgAEBg..i&
+ved=2ahUKEwjbv_bY1KWUAxWtkysGHSoQPY0Q_ZkOegYIAQgAEBg&
+aep=26&
+authuser=0&
+udm=50&
+stkp=Afn5iiX7RALLkJu3eu9Dmjr232D-q2giAyxVQgQM4SPwgYdA9AuL_tEHZL-YKwLACquWxRP7Nk7yHCT7pXvB2sHMeV232QO9E0u2wI91C4IJ80ByNq89yFkCcQ%3D%3D&
+cs=0&
+mstk=AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk&
+csuir=1&
+elrc=CmowYTdERmtPZU4tRnNJXy1OMENiTDlXNmIzNFo2LTZLakdTWTAxaXVyemR6SWtmSTFOcHZiMWRGTTg4MDd2bDJPSGlkQjFIMFJDUE1qUnRXSFJlVXNiRVdGOGZ3UTBuRFJaMkZ0NDFVaUFnEhdBN3I3YVp1eU5hMm5ydUVQcXFEMDZRZxoLWnA0MHRnbWNRSjA&
+async=_fmt:adl,_xsrf:AKPOr1T3_wuNwHocaRfMix11kTEyAPTgWg%3A1778104836134
+
+
+Ref: 
+
+        [
+            // https://www.google.com/search?udm=50&utm_source=google&utm_campaign=aim_aware&utm_content=aim_bigsplash&authuser=0&mstk=AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk&mtid=cR3pacWdJp6JptQPzN3LwA4&csuir=1&aep=26&q=%22google+chrome+for+testing%22+ignoring+declarative+net+blocks&ved=0CAAQ2_wOahcKEwi4iMfViaWUAxUAAAAAHQAAAAAQGA&atvm=2
+            // https://www.google.com/async/folwr?garc=ChswYTdtYUNBOFk5TU5SSlkySGowSXlUd2p1UmsSF0xHMzdhZXlOTU5icW1MUVB4S3Vsa1FnGgtMTEZDd1FOZVZuYw&mlro=0a7frb3Gb6iDuKZXAmyD8_RlPEcAoNcPFdxU3B9sU2JT8NmpcfF2f5R8mGZPxzD9btL8hZildc15DW_L6QUkgrsXqyfjMFWUlU0g5JPwtZ7lYQdSOb_ksktw66DGexefjgPMyPGW&mlros=zGjs8o27Dao&ei=LG37aeyNMNbqmLQPxKulkQg&q=%22google+chrome+for+testing%22+ignoring+declarative+net+blocks&yv=3&vet=12ahUKEwjs04K1i6WUAxVWNYYAHcRVKYIQ_ZkOegYIAQgAEBg..i&ved=2ahUKEwjs04K1i6WUAxVWNYYAHcRVKYIQ_ZkOegYIAQgAEBg&aep=26&authuser=0&udm=50&stkp=Afn5iiXKAfabE_3YvfP3mcVCRLB-jvc251cXyYycVEyQOom6UywtwZ9lVmUejdrXPaVuPibQmNBEOKFu83CcIIopJhVLi0txt_fL0Qbez2qfUYNxJKfQIjItMQ%3D%3D&cs=0&mstk=AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk&csuir=1&elrc=CmowYTY4cEhNd01jVTVUcmhDUlUxRjVtbE94bW96MEd2aE5NcFhmQnB6Uk9VSnpQNXNSWXdOOXpfU3RIM3kwLURHczBMV3ZjcE1mZEtvaGtkdDBSc2dQbkNIQ2Rod29MQzZaeUhxdEJOV2N3EhdMRzM3YWV5Tk1OYnFtTFFQeEt1bGtRZxoLMDFUM0thc2ZFckE&async=_fmt:adl,_xsrf:AKPOr1QgBywOgaKjIYE1N1kFFQo4KoXJKQ%3A1778085165149
+
+            [
+                "AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk",
+                "cR3pacWdJp6JptQPzN3LwA4"
+            ],
+            "\"google chrome for testing\" ignoring declarative net blocks",
+            null,
+            0,
+            null,
+            [
+                1776885105,
+                370959000
+            ],
+            [
+                1776885105,
+                883538000
+            ],
+            null,
+            null,
+            null,
+            "do it",
+            0,
+            "do it",
+            null,
+            null,
+            null,
+            null,
+            0,
+            0,
+            null,
+            "\"google chrome for testing\" ignoring declarative net blocks",
+            null,
+            [
+                [
+                    "mstk",
+                    "AUtExfCBSOrfT-8LNWUr-4V5qwgY_OAqakxdzreohbt7PMR2ACFrZcKkcV8bSjAPintPV7ta0olrEx8jfy4YSbdiCp9-XMgKf8979oHfcYBbT2o_V-vPpCvdcA-Cx1Np6aufxHJW9FAZjg_nVMrcO40O_gZ16aQPDC-hQlQl2Jf8IWUSDpbNcLoUoBGmK69FukvxVTt1_brH3eeXjWrGghN_Wi2FQomQGMF7nKDRJAvsBbBUC9Rytusad9o5K3CoAG4oaD0lp0nC-SdeqKq0nU0prZzBzUDcTuDaWDQkFTR07tFoDX7pKMG6W_ThzWBwhjhXCXjdDOJE5oLNU8_7tmPo5oi3k2Sf26YKawfdTWUvBlzvsA6pWzooYnqmVUtN2324GtlyTu4Npe1R4IoOVmJvGwYjJO_I0EVU-4Ieiop9sOgGW5Y2wxUJz6VxoZwJbpvosi-oPz1HdBk"
+                ],
+                [
+                    "mtid",
+                    "cR3pacWdJp6JptQPzN3LwA4"
+                ],
+                [
+                    "csuir",
+                    "1"
+                ],
+                [
+                    "udm",
+                    "50"
+                ]
+            ],
+            1,
+            "Apr 22"
+        ],
