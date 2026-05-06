@@ -1,3 +1,5 @@
+import check from 'check-types'
+
 import { Conversation, DateString } from '@bric/rex-types/types'
 
 import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
@@ -144,7 +146,9 @@ export class REXChatGoogleAISpider extends REXSpider {
 
         this.parseConversation(next)
           .then((parsedConvo) => {
-            parsed.push(parsedConvo)
+            if (parsedConvo !== null) {
+              parsed.push(parsedConvo)
+            }
 
             nextConvo()
           })
@@ -154,20 +158,24 @@ export class REXChatGoogleAISpider extends REXSpider {
     })
   }
 
-  parseConversation(conversationJson:any):Promise<Conversation> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  parseConversation(conversationJson:any):Promise<Conversation|null> { // eslint-disable-line @typescript-eslint/no-explicit-any
     return new Promise((resolve) => {
-      const conversation:Conversation = {
-        turns: [],
-        platform: 'google-ai',
-        identifier: `${conversationJson[0][0]}_${conversationJson[0][1]}`,
-        started: new DateString(conversationJson[5][0]),
-        metadata: {
-          'title*': conversationJson[1],
-          'src': conversationJson
+      if (check.array(conversationJson)) {
+        const conversation:Conversation = {
+          turns: [],
+          platform: 'google-ai',
+          identifier: `${conversationJson[0][0]}_${conversationJson[0][1]}`,
+          started: new DateString(conversationJson[5][0]),
+          metadata: {
+            'title*': conversationJson[1],
+            'src': conversationJson
+          }
         }
-      }
 
-      resolve(conversation)
+        resolve(conversation)
+      } else {
+        resolve(null)
+      }
     })
   }
 }
