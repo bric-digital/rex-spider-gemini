@@ -39,11 +39,13 @@ export class REXChatGoogleAISpider extends REXSpider {
             response.text().then((rawHtml) => {
               const lines = rawHtml.match(/Sign In/g)
 
+              console.log(`[rex-spider-google-ai] checkLogin Match: ${lines}`)
+
               if (lines !== null && lines.length > 0) {
-                  resolve(true)
+                  resolve(false)
               }
 
-              resolve(false)
+              resolve(true)
             })
           } else {
             resolve(false)
