@@ -1,6 +1,7 @@
-import { Conversation, Turn, DateString, Citation, Search } from '@bric/rex-types/types'
+import { Conversation, DateString } from '@bric/rex-types/types'
 
-import rexCorePlugin, { EventPayload } from '@bric/rex-core/service-worker'
+import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
+
 import rexSpiderPlugin, { REXSpider } from '@bric/rex-spider/service-worker'
 
 export class REXChatGoogleAISpider extends REXSpider {
@@ -99,7 +100,18 @@ export class REXChatGoogleAISpider extends REXSpider {
                 response.text().then((rawResponse) => {
                   console.log(`[rex-spider-google-ai] Fetched list payload (${response.status}: ${response.statusText}):`)
                   console.log(rawResponse)
-                  const conversations = this.parseListResponse(rawResponse)
+                  this.parseListResponse(rawResponse).then((conversations) => {
+
+                    for (const conversation of conversations) {
+                      const payload: EventPayload = {
+                        name: 'rex-conversation',
+                        date: conversation.started,
+                        ...conversation
+                      }
+
+                      dispatchEvent(payload)
+                    }
+                  })
                 })
               }
             })
@@ -108,7 +120,7 @@ export class REXChatGoogleAISpider extends REXSpider {
     })
   }
 
-  parseListResponse(rawContent:string):Promise<any|null> {
+  parseListResponse(rawContent:string):Promise<Conversation[]> {
     const cleanedResponse = rawContent.substring(6)
 
     console.log(cleanedResponse)
@@ -120,7 +132,7 @@ export class REXChatGoogleAISpider extends REXSpider {
 
     const pending = [... responseObject[0]]
 
-    const parsed = []
+    const parsed:Conversation[] = []
 
     return new Promise((resolve) => {
       const nextConvo = () => {
@@ -142,7 +154,7 @@ export class REXChatGoogleAISpider extends REXSpider {
     })
   }
 
-  parseConversation(conversationJson:any):Promise<any|null> {
+  parseConversation(conversationJson:any):Promise<Conversation> { // eslint-disable-line @typescript-eslint/no-explicit-any
     return new Promise((resolve) => {
       const conversation:Conversation = {
         turns: [],
@@ -156,159 +168,6 @@ export class REXChatGoogleAISpider extends REXSpider {
       }
 
       resolve(conversation)
-    })
-  }
-
-  parseConversationOff(conversationJson:any):Promise<any|null> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    return new Promise((resolve) => {
-      console.log(`[rex-spider-chatgpt] parseConversation:`)
-      console.log(conversationJson)
-
-      const firstWhen = new Date(conversationJson['create_time'] * 1000)
-
-      const latestDate = firstWhen
-
-      const firstWhenString:DateString = new DateString(conversationJson['create_time'])
-
-      const conversation:Conversation = {
-        turns:[],
-        platform: 'chatgpt',
-        identifier: conversationJson['conversation_id'],
-        started: firstWhenString,
-        ended:firstWhenString,
-        metadata: conversationJson // TODO: Pull out so only populated on debug=true
-      }
-
-      const convoIds = ['client-created-root']
-
-      while (convoIds.length > 0) {
-        const convoId = convoIds.shift()
-
-        if (convoId !== undefined) {
-          const turnJson = conversationJson['mapping'][convoId]
-
-          if (turnJson !== undefined) {
-            let createTime = firstWhenString
-
-            if (turnJson.message !== null) {
-              if (turnJson['create_time'] !== null) {
-                createTime = new DateString(`${turnJson['create_time'] * 1000}`)
-              }
-
-              const turn:Turn = {
-                speaker: turnJson.message.author.role,
-                when: createTime,
-                identifier: turnJson.message.id,
-                'content*': '',
-                'metadata*': turnJson,
-                'parent': turnJson.parent,
-              }
-
-              if (turnJson.message.content.parts !== undefined) {
-                turn['content*'] = turnJson.message.content.parts.join('\n')
-              } else if (turnJson.message.content.text !== undefined) {
-                turn['content*'] = turnJson.message.content.text
-              }
-
-              if (turnJson.metadata !== undefined) {
-                if (turnJson.metadata['search_result_groups'] !== undefined) {
-                  const search:Search = {
-                      platform: 'chatgpt',
-                      'query*': '?',
-                      type: 'web',
-                      results: []
-                  }
-
-                  for (const searchGroup of turnJson.metadata['search_result_groups']) {
-                    for (const entry of (searchGroup.entries as any[])) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                      search.results.push({
-                        title: entry['title'],
-                        url: entry['url'],
-                        preview: entry['snippet'],
-                        index: entry['ref_id']['ref_index'],
-                        metadata: entry,
-                      })
-                    }
-                  }
-
-                  turn.search = search
-                }
-
-                if (turnJson.metadata['content_references'] !== undefined) {
-                  turn.citations = []
-
-                  for (const contentReference of turnJson.metadata['content_references']) {
-                    for (const item of contentReference['items']) {
-                      const citation:Citation = {
-                        title: item.title,
-                        url: item.url,
-                        source: item.attribution
-                      }
-
-                      if (item.attributions !== null) {
-                        citation.source = item.attributions.join(', ')
-                      }
-
-                      turn.citations.push(citation)
-                    }
-                  }
-                }
-              }
-
-              conversation.turns.push(turn)
-            }
-
-            for (const childId of turnJson.children) {
-              convoIds.push(childId)
-            }
-
-          }
-        }
-      }
-
-      const lastUpdateKey = `${conversation.platform}-${conversation.identifier}-last-update`
-
-      const message = {
-        messageType: 'fetchValue',
-        key: lastUpdateKey
-      }
-
-      rexCorePlugin.handleMessage(message, this, (response) => {
-        let timestamp = 0
-
-        if (response !== null) {
-          timestamp = response
-        }
-
-        console.log(`[rex-spider-chatgpt] TS TEST ${timestamp} <? ${latestDate.valueOf()}`)
-
-        if (timestamp < latestDate.valueOf()) {
-          const payload:EventPayload = {
-            name: 'rex-conversation',
-            date: firstWhen,
-            ...conversation
-          }
-
-          console.log(`[rex-spider-chatgpt] log:`)
-          console.log(payload)
-
-          const storeMessage = {
-            messageType: 'storeValue',
-            key: lastUpdateKey,
-            value: latestDate.valueOf()
-          }
-
-          rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-            console.log(`[rex-spider-chatgpt] ${lastUpdateKey} = ${latestDate.valueOf()}`)
-
-            resolve(payload)
-          })
-
-          return
-        } else {
-          resolve(null)
-        }
-      })
     })
   }
 }
