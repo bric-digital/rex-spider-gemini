@@ -149,37 +149,43 @@ export class REXChatGoogleAISpider extends REXSpider {
   }
 
   parseListResponse(rawContent:string):Promise<Conversation[]> {
-    const cleanedResponse = rawContent.substring(6)
-
-    const responseObject = JSON.parse(cleanedResponse)
-
-    const pending = [... responseObject[0]]
-
-    const parsed:Conversation[] = []
-
     return new Promise((resolve) => {
-      const nextConvo = () => {
-        if (pending.length == 0) {
-          resolve(parsed)
+      const cleanedResponse = rawContent.substring(6)
+
+      const responseObject = JSON.parse(cleanedResponse)
+
+      const parsed:Conversation[] = []
+
+      if (check.array(responseObject)) {
+        const pending = [... responseObject[0]]
+
+        const nextConvo = () => {
+          if (pending.length == 0) {
+            resolve(parsed)
+          }
+
+          const next = pending.pop()
+
+          this.parseConversation(next)
+            .then((parsedConvo) => {
+              if (parsedConvo !== null) {
+                this.checkSeen(parsedConvo).then((include:boolean) => {
+                  if (include) {
+                    parsed.push(parsedConvo)
+                  }
+                })
+              }
+
+              nextConvo()
+            })
         }
 
-        const next = pending.pop()
+        nextConvo()
+      } else {
+        console.log(`[rex-spider-google-ai] Invalid conversation list: ${rawContent}`)
 
-        this.parseConversation(next)
-          .then((parsedConvo) => {
-            if (parsedConvo !== null) {
-              this.checkSeen(parsedConvo).then((include:boolean) => {
-                if (include) {
-                  parsed.push(parsedConvo)
-                }
-              })
-            }
-
-            nextConvo()
-          })
+        resolve(parsed)
       }
-
-      nextConvo()
     })
   }
 
