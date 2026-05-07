@@ -111,12 +111,42 @@ export class REXChatGoogleAISpider extends REXSpider {
                         ...conversation
                       }
 
-                      dispatchEvent(payload)
+                      this.logSeen(conversation).then(() => {
+                        dispatchEvent(payload)
+                      })
                     }
                   })
                 })
               }
             })
+        })
+      })
+    })
+  }
+
+  checkSeen(conversation:Conversation) {
+    return new Promise<boolean>((resolve) => {
+      chrome.storage.local.get('rexSeenGoogleAIConversations').then((result) => {
+        if (result.rexSeenGoogleAIConversations === undefined) {
+          result.rexSeenGoogleAIConversations = []
+        }
+
+        resolve(result.rexSeenGoogleAIConversations.includes(conversation.identifier))
+      })
+    })
+  }
+
+  logSeen(conversation:Conversation) {
+    return new Promise<void>((resolve) => {
+      chrome.storage.local.get('rexSeenGoogleAIConversations').then((result) => {
+        if (result.rexSeenGoogleAIConversations === undefined) {
+          result.rexSeenGoogleAIConversations = []
+        }
+
+        result.rexSeenGoogleAIConversations.push(conversation.identifier)
+
+        chrome.storage.local.set(result).then(() => {
+          resolve()
         })
       })
     })
@@ -147,7 +177,11 @@ export class REXChatGoogleAISpider extends REXSpider {
         this.parseConversation(next)
           .then((parsedConvo) => {
             if (parsedConvo !== null) {
-              parsed.push(parsedConvo)
+              this.checkSeen(parsedConvo).then((include:boolean) => {
+                if (include) {
+                  parsed.push(parsedConvo)
+                }
+              })
             }
 
             nextConvo()
