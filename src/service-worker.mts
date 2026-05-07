@@ -35,14 +35,11 @@ export class REXChatGoogleAISpider extends REXSpider {
 
   checkLogin(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      console.log(`[rex-spider-google-ai] checkLogin`)
       fetch(this.loginUrl())
         .then((response: Response) => {
           if (response.ok) {
             response.text().then((rawHtml) => {
               const lines = rawHtml.match(/Sign In/g)
-
-              console.log(`[rex-spider-google-ai] checkLogin Match: ${lines}`)
 
               if (lines !== null && lines.length > 0) {
                   resolve(false)
@@ -58,8 +55,6 @@ export class REXChatGoogleAISpider extends REXSpider {
   }
 
   checkNeedsUpdate(): Promise<boolean> {
-    console.log(`[rex-spider-google-ai] checkNeedsUpdate`)
-
     return new Promise<boolean>((resolve) => {
       if (this.syncing) {
         console.log(`[rex-spider-google-ai] Still syncing. Skipping this round...`)
@@ -100,10 +95,9 @@ export class REXChatGoogleAISpider extends REXSpider {
             .then((response: Response) => {
               if (response.ok) {
                 response.text().then((rawResponse) => {
-                  console.log(`[rex-spider-google-ai] Fetched list payload (${response.status}: ${response.statusText}):`)
-                  console.log(rawResponse)
-                  this.parseListResponse(rawResponse).then((conversations) => {
+                  console.log(`[rex-spider-google-ai] Fetched list payload (${response.status}: ${response.statusText}): ${rawResponse.length}`)
 
+                  this.parseListResponse(rawResponse).then((conversations) => {
                     for (const conversation of conversations) {
                       const payload: EventPayload = {
                         name: 'rex-conversation',
@@ -112,6 +106,8 @@ export class REXChatGoogleAISpider extends REXSpider {
                       }
 
                       this.logSeen(conversation).then(() => {
+                        console.log(`[rex-spider-google-ai] Logging ${conversation.identifier} for transmission...`)
+
                         dispatchEvent(payload)
                       })
                     }
@@ -155,12 +151,7 @@ export class REXChatGoogleAISpider extends REXSpider {
   parseListResponse(rawContent:string):Promise<Conversation[]> {
     const cleanedResponse = rawContent.substring(6)
 
-    console.log(cleanedResponse)
-
     const responseObject = JSON.parse(cleanedResponse)
-
-    console.log('responseObject')
-    console.log(responseObject)
 
     const pending = [... responseObject[0]]
 
@@ -208,6 +199,8 @@ export class REXChatGoogleAISpider extends REXSpider {
 
         resolve(conversation)
       } else {
+        console.log(`[rex-spider-google-ai] Invalid conversation data: ${conversationJson}`)
+
         resolve(null)
       }
     })
