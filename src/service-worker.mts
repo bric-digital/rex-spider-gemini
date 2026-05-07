@@ -131,7 +131,7 @@ export class REXChatGoogleAISpider extends REXSpider {
           result.rexSeenGoogleAIConversations = []
         }
 
-        resolve(result.rexSeenGoogleAIConversations.includes(conversation.identifier))
+        resolve(result.rexSeenGoogleAIConversations.includes(`${conversation.identifier}-${conversation.started.toJSON()}`))
       })
     })
   }
@@ -143,7 +143,7 @@ export class REXChatGoogleAISpider extends REXSpider {
           result.rexSeenGoogleAIConversations = []
         }
 
-        result.rexSeenGoogleAIConversations.push(conversation.identifier)
+        result.rexSeenGoogleAIConversations.push(`${conversation.identifier}-${conversation.started.toJSON()}`)
 
         chrome.storage.local.set(result).then(() => {
           resolve()
