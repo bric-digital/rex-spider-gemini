@@ -6,9 +6,13 @@ test('Service worker data parsing tests', async ({serviceWorker}) => {
       serviceWorker.evaluate(async () => {
         return new Promise((testResolve) => {
           const doTest = () => {
+            console.log('DO FETCH')
+
             fetch(chrome.runtime.getURL('data/google-ai-list.txt'))
               .then((response) => {
                 response.text().then((textString) => {
+                  console.log(`DO PARSE: ${textString}`)
+
                   const conversations = self.rexGoogleAIPlugin.parseListResponse(textString)
 
                   testResolve(conversations)

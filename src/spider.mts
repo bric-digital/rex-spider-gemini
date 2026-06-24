@@ -1,12 +1,12 @@
 import rexSpiderManager, { REXContentSpider } from '@bric/rex-spider/spider'
 
-export class REXGoogleAIContentSpider extends REXContentSpider {
+export class REXGeminiContentSpider extends REXContentSpider {
   toString():string {
-    return 'REXGoogleAIContentSpider'
+    return 'REXGeminiContentSpider'
   }
 
   name():string {
-    return 'Google AI'
+    return 'Gemini'
   }
 
   urlMatches(url:string): boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -17,7 +17,7 @@ export class REXGoogleAIContentSpider extends REXContentSpider {
   }
 }
 
-const spider = new REXGoogleAIContentSpider()
+const spider = new REXGeminiContentSpider()
 rexSpiderManager.registerSpider(spider)
 
 export default spider

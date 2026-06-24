@@ -1,7 +1,7 @@
 {
-    "name": "@bric/rex-spider-google-ai",
+    "name": "@bric/rex-spider-gemini",
     "version": "0.0.1",
-    "description": "Google AI(s) plugin for REX spider module.",
+    "description": "Gemini plugin for REX spider module.",
     "keywords": [
         "extension",
         "rex"
@@ -9,13 +9,13 @@
     "author": "Behavioral Research Innovation Center",
     "type": "module",
     "main": "index.mts",
-    "homepage": "https://github.com/bric-digital/rex-spider-google-ai",
+    "homepage": "https://github.com/bric-digital/rex-spider-gemini",
     "bugs": {
-        "url": "https://github.com/bric-digital/rex-spider-google-ai/issues"
+        "url": "https://github.com/bric-digital/rex-spider-gemini/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/bric-digital/rex-spider-google-ai.git"
+        "url": "git+https://github.com/bric-digital/rex-spider-gemini.git"
     },
     "exports": {
         "./extension": "./src/extension.mts",

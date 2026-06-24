@@ -1,6 +1,6 @@
 {
     "configuration_url": "config.json",
-    "identifier": "rex-spider-google-api-test",
+    "identifier": "rex-spider-gemini-test",
     "content_processing": {
         "regexp": [{
             "pattern": "hello",

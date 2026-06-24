@@ -6,7 +6,7 @@ import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/servi
 
 import rexSpiderPlugin, { REXSpider } from '@bric/rex-spider/service-worker'
 
-export class REXChatGoogleAISpider extends REXSpider {
+export class REXGeminiSpider extends REXSpider {
   sleepDelayMs:number = 10000
   syncing:boolean = false
   lastSync:number = 0
@@ -14,23 +14,19 @@ export class REXChatGoogleAISpider extends REXSpider {
   accessToken:string|null = null
 
   fetchUrls(): string[] {
-    return [
-      'https://www.google.com/httpservice/web/AimThreadsService/ListThreads?aep=22&sca_esv=55e9f3c856495c1e&source=hp&udm=50&reqpld=[null,null,0]&msc=gwsclient&opi=89978449',
-    ]
+    return []
   }
 
   name(): string {
-    return 'Google AI'
+    return 'Gemini'
   }
 
   loginUrl(): string {
-    return 'https://www.google.com/'
+    return 'https://gemini.google.com/app'
   }
 
   fetchInitialUrls(): string[] {
-    return [
-      'https://www.google.com/httpservice/web/AimThreadsService/ListThreads?aep=22&sca_esv=55e9f3c856495c1e&source=hp&udm=50&reqpld=[null,null,0]&msc=gwsclient&opi=89978449',
-    ]
+    return []
   }
 
   checkLogin(): Promise<boolean> {
@@ -39,13 +35,11 @@ export class REXChatGoogleAISpider extends REXSpider {
         .then((response: Response) => {
           if (response.ok) {
             response.text().then((rawHtml) => {
-              const lines = rawHtml.match(/Sign In/g)
-
-              if (lines !== null && lines.length > 0) {
+              if (rawHtml.includes("<span class=\"gb_ie\">Sign in</span>")) {
                   resolve(false)
+              } else {
+                resolve(true)
               }
-
-              resolve(true)
             })
           } else {
             resolve(false)
@@ -54,167 +48,268 @@ export class REXChatGoogleAISpider extends REXSpider {
     })
   }
 
+  parseChatList(rawChatListData:string) : Conversation[] {
+    const parsed:Conversation[] = []
+ 
+    try {
+      if (rawChatListData.startsWith(')]}\'')) {
+        rawChatListData = rawChatListData.substring(4).trim()
+
+        const lines = rawChatListData.split(/\r?\n/)
+
+        for (const line of lines) {
+          if (line.startsWith('[[')) {
+            const parsedLine = JSON.parse(line)
+
+            for (const message of parsedLine) {
+              if (message.length > 2 && message[1] === 'MaZiqc') {
+                const chatList = JSON.parse(message[2])
+
+                if (check.array(chatList[2])) {
+                  for (const chat of chatList[2]) {
+                    const conversation:Conversation = {
+                      identifier: chat[0],
+                      turns: [],
+                      platform: 'google-ai-gemini',
+                      started: new DateString(chat[5][0]),
+                      metadata: chat
+                    }
+
+                    parsed.push(conversation)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[rex-spider-gemini] Error parsing conversation:`)
+      console.error(err)
+    }
+
+    return parsed
+  }
+
+  private signalComplete(crawledCount: number) {
+    setTimeout(() => {
+      dispatchEvent({
+        name: 'pdk-app-event',
+        event_name: 'rex-spider-gemini-complete',
+        event_details: {
+          crawled_count: crawledCount,
+          date: Date.now()
+        }
+      })
+    }, 1100)
+  }
+
+
+  fetchChats(): Promise<Conversation[]> {
+    return new Promise<Conversation[]>((resolve, reject) => {
+      const requestId = Math.floor(Math.random() * (999999 - 10000)) + 10000
+
+      const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
+
+      const payloads = [
+        {
+          'f.req': '[[["MaZiqc","[13,null,[0,null,1]]",null,"generic"]]]',
+          'at': (this.accessToken as string)
+        }, 
+        {
+          'f.req': '[[["MaZiqc","[13,null,[1,null,1]]",null,"generic"]]]',
+          'at': (this.accessToken as string)
+        }
+      ]
+
+      const chats:Conversation[] = []
+
+      const fetchNext = () => {
+        if (payloads.length <= 0) {
+          resolve(chats)
+        } else {
+          const nextPayload = payloads.pop()
+
+          if (nextPayload !== undefined) {
+            fetch(chatsUrl, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },        
+              body: new URLSearchParams(nextPayload)
+            }).then((response: Response) => {
+              if (!response.ok) {
+                console.log(`[rex-spider-gemini] List fetch failed (status ${response.status}).`)
+                this.syncing = false
+                this.signalComplete(0)
+                reject(`List fetch failed (status ${response.status}).`)
+              } else {
+                response.text().then((rawBody) => {
+                  const parsed = this.parseChatList(rawBody)
+
+                  if (parsed !== null) {
+                    for (const chat of parsed) {
+                      chats.push(chat)
+                    }
+                  }
+
+                  fetchNext()
+                })
+              }
+            })
+          } else {
+            fetchNext()
+          }        
+        }
+      }
+
+      fetchNext()
+    })
+  }
+
   checkNeedsUpdate(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       if (this.syncing) {
-        console.log(`[rex-spider-google-ai] Still syncing. Skipping this round...`)
+        console.log(`[rex-spider-gemini] Still syncing. Skipping this round...`)
         resolve(true)
-
-        return
-      }
-
-      const fetchLastSync = {
-        messageType: 'fetchValue',
-        key: 'rex-spider-google-ai-last-sync'
-      }
-
-      rexCorePlugin.handleMessage(fetchLastSync, this, (response) => {
-        let timestamp = 0
-
-        if (response !== null) {
-          timestamp = response
+      } else {
+        const fetchLastSync = {
+          messageType: 'fetchValue',
+          key: 'rex-spider-gemini-last-sync'
         }
 
-        if (Date.now() < timestamp + this.syncPeriod) {
-          console.log(`[rex-spider-google-ai] Too soon to sync again. Skipping this round...`)
-          resolve(true)
+        rexCorePlugin.handleMessage(fetchLastSync, this, (response) => {
+          let timestamp = 0
 
-          return
-        }
+          if (response !== null) {
+            timestamp = response
+          }
 
-        const storeMessage = {
-          messageType: 'storeValue',
-          key: 'rex-spider-google-ai-last-sync',
-          value: Date.now()
-        }
+          if (Date.now() < timestamp + this.syncPeriod) {
+            console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
+            this.signalComplete(0)
+            resolve(true)
+          } else {
+            const storeMessage = {
+              messageType: 'storeValue',
+              key: 'rex-spider-gemini-last-sync',
+              value: Date.now()
+            }
 
-        rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-          this.syncing = true
+            rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+              this.syncing = true
 
-          fetch(this.fetchInitialUrls()[0])
-            .then((response: Response) => {
-              if (response.ok) {
-                response.text().then((rawResponse) => {
-                  console.log(`[rex-spider-google-ai] Fetched list payload (${response.status}: ${response.statusText}): ${rawResponse.length}`)
+              const homeUrl = 'https://gemini.google.com/app'
 
-                  this.parseListResponse(rawResponse).then((conversations) => {
-                    for (const conversation of conversations) {
-                      const payload: EventPayload = {
-                        name: 'rex-conversation',
-                        date: conversation.started,
-                        ...conversation
+              fetch(homeUrl, {
+                method: 'GET',
+                credentials: 'include', // Crucial property to send cookies
+              }).then((response: Response) => {
+                if (!response.ok) {
+                  console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
+
+                  this.syncing = false
+                  this.signalComplete(0)
+
+                  resolve(true)
+                } else {
+                  response.text().then((rawHtml) => {
+                    if (rawHtml.includes('"SNlM0e":"')) {
+                      const startIndex = rawHtml.indexOf('"SNlM0e":"')
+
+                      if (startIndex !== -1) {
+                        const prefixStripped = rawHtml.substring(startIndex)
+
+                        const tokens = prefixStripped.split('"')
+
+                        if (tokens.length > 3) {
+                          this.accessToken = tokens[3]
+                        }
                       }
 
-                      this.logSeen(conversation).then(() => {
-                        console.log(`[rex-spider-google-ai] Logging ${conversation.identifier} for transmission...`)
+                      if (this.accessToken === null) {
+                        this.syncing = false
+                        this.signalComplete(0)
 
-                        dispatchEvent(payload)
-                      })
+                        resolve(true)
+                      } else {
+                        this.fetchChats().then((chatList:Conversation[]) => {
+                          let dispatched = 0
+
+                          const uploadConversations = () => {
+                            if (chatList.length <= 0) {
+                              this.syncing = false
+                              this.signalComplete(dispatched)
+                              resolve(false)
+                            } else {
+                              const conversation = chatList.pop()
+
+                              if (conversation !== undefined) {
+                                if (conversation.started.value !== null) {
+                                  const payload: EventPayload = {
+                                    name: 'rex-conversation',
+                                    date: conversation.started.value.epochMilliseconds / 1000,
+                                    ...conversation
+                                  }
+
+                                  const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
+
+                                  const fetchLastUpload = {
+                                    messageType: 'fetchValue',
+                                    key: uploadKey
+                                  }
+
+                                  rexCorePlugin.handleMessage(fetchLastUpload, this, (uploadValue) => {
+                                    if (uploadValue === null) {
+                                      dispatchEvent(payload)
+
+                                      dispatched += 1
+
+                                      const storeUpload = {
+                                        messageType: 'storeValue',
+                                        key: uploadKey,
+                                        value: Date.now()
+                                      }
+
+                                      rexCorePlugin.handleMessage(storeUpload, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+                                        uploadConversations()
+                                      })
+                                    } else {
+                                      uploadConversations()
+                                    }
+                                  })
+                                }
+                              }
+                            }
+                          }
+
+                          uploadConversations()
+                        })
+                      }
                     }
                   })
-                })
-              }
+                }
+              })
+              .catch((err) => {
+                console.error(`[rex-spider-gemini] Error encountered fetching conversations:`)
+                console.error(err)
+
+                this.syncing = false
+                this.signalComplete(0)
+
+                resolve(true)
+              })
             })
-        })
-      })
-    })
-  }
-
-  checkSeen(conversation:Conversation) {
-    return new Promise<boolean>((resolve) => {
-      chrome.storage.local.get('rexSeenGoogleAIConversations').then((result) => {
-        if (result.rexSeenGoogleAIConversations === undefined) {
-          result.rexSeenGoogleAIConversations = []
-        }
-
-        resolve(result.rexSeenGoogleAIConversations.includes(`${conversation.identifier}-${conversation.started.toJSON()}`))
-      })
-    })
-  }
-
-  logSeen(conversation:Conversation) {
-    return new Promise<void>((resolve) => {
-      chrome.storage.local.get('rexSeenGoogleAIConversations').then((result) => {
-        if (result.rexSeenGoogleAIConversations === undefined) {
-          result.rexSeenGoogleAIConversations = []
-        }
-
-        result.rexSeenGoogleAIConversations.push(`${conversation.identifier}-${conversation.started.toJSON()}`)
-
-        chrome.storage.local.set(result).then(() => {
-          resolve()
-        })
-      })
-    })
-  }
-
-  parseListResponse(rawContent:string):Promise<Conversation[]> {
-    return new Promise((resolve) => {
-      const cleanedResponse = rawContent.substring(6)
-
-      const responseObject = JSON.parse(cleanedResponse)
-
-      const parsed:Conversation[] = []
-
-      if (check.array(responseObject)) {
-        const pending = [... responseObject[0]]
-
-        const nextConvo = () => {
-          if (pending.length == 0) {
-            resolve(parsed)
           }
-
-          const next = pending.pop()
-
-          this.parseConversation(next)
-            .then((parsedConvo) => {
-              if (parsedConvo !== null) {
-                this.checkSeen(parsedConvo).then((include:boolean) => {
-                  if (include) {
-                    parsed.push(parsedConvo)
-                  }
-                })
-              }
-
-              nextConvo()
-            })
-        }
-
-        nextConvo()
-      } else {
-        console.log(`[rex-spider-google-ai] Invalid conversation list: ${rawContent}`)
-
-        resolve(parsed)
-      }
-    })
-  }
-
-  parseConversation(conversationJson:any):Promise<Conversation|null> { // eslint-disable-line @typescript-eslint/no-explicit-any
-    return new Promise((resolve) => {
-      if (check.array(conversationJson)) {
-        const conversation:Conversation = {
-          turns: [],
-          platform: 'google-ai',
-          identifier: `${conversationJson[0][0]}_${conversationJson[0][1]}`,
-          started: new DateString(conversationJson[5][0]),
-          metadata: {
-            'title*': conversationJson[1],
-            'src': conversationJson
-          }
-        }
-
-        resolve(conversation)
-      } else {
-        console.log(`[rex-spider-google-ai] Invalid conversation data: ${conversationJson}`)
-
-        resolve(null)
+        })
       }
     })
   }
 }
 
-const googleAISpider = new REXChatGoogleAISpider()
+const geminiSpider = new REXGeminiSpider()
 
-rexSpiderPlugin.registerSpider(googleAISpider)
+rexSpiderPlugin.registerSpider(geminiSpider)
 
-export default googleAISpider
+export default geminiSpider
