@@ -111,16 +111,13 @@ export class REXGeminiSpider extends REXSpider {
 
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
 
-      const payloads = [
-        {
-          'f.req': '[[["MaZiqc","[13,null,[0,null,1]]",null,"generic"]]]',
-          'at': (this.accessToken as string)
-        }, 
-        {
-          'f.req': '[[["MaZiqc","[13,null,[1,null,1]]",null,"generic"]]]',
-          'at': (this.accessToken as string)
-        }
-      ]
+      const payloads = [{
+        'f.req': '[[["MaZiqc","[13,null,[0,null,1]]",null,"generic"]]]',
+        'at': (this.accessToken as string)
+      }, {
+        'f.req': '[[["MaZiqc","[13,null,[1,null,1]]",null,"generic"]]]',
+        'at': (this.accessToken as string)
+      }]
 
       const chats:Conversation[] = []
 
@@ -249,7 +246,7 @@ export class REXGeminiSpider extends REXSpider {
                                 if (conversation.started.value !== null) {
                                   const payload: EventPayload = {
                                     name: 'rex-conversation',
-                                    date: conversation.started.value.epochMilliseconds / 1000,
+                                    date: conversation.started.value.epochMilliseconds,
                                     ...conversation
                                   }
 
