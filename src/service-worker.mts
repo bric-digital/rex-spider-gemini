@@ -4,7 +4,7 @@ import { Conversation, DateString } from '@bric/rex-types/types'
 
 import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
 
-import rexSpiderPlugin, { REXSpider } from '@bric/rex-spider/service-worker'
+import rexSpiderPlugin, { REXSpider, REXSpiderCrawlResult } from '@bric/rex-spider/service-worker'
 
 export class REXGeminiSpider extends REXSpider {
   sleepDelayMs:number = 10000
@@ -19,6 +19,10 @@ export class REXGeminiSpider extends REXSpider {
 
   name(): string {
     return 'Gemini'
+  }
+
+  identifier(): string {
+    return 'gemini'
   }
 
   loginUrl(): string {
@@ -166,6 +170,7 @@ export class REXGeminiSpider extends REXSpider {
   }
 
   checkNeedsUpdate(): Promise<boolean> {
+    // TODO: Deprecate in favor of cleaner doBackgroundCrawl
     return new Promise<boolean>((resolve) => {
       if (this.syncing) {
         console.log(`[rex-spider-gemini] Still syncing. Skipping this round...`)
@@ -301,6 +306,180 @@ export class REXGeminiSpider extends REXSpider {
           }
         })
       }
+    })
+  }
+
+  doBackgroundCrawl():Promise<REXSpiderCrawlResult> {
+    return new Promise<REXSpiderCrawlResult>((resolve) => {
+      const fetchLastSync = {
+        messageType: 'fetchValue',
+        key: 'rex-spider-gemini-last-sync'
+      }
+
+      rexCorePlugin.handleMessage(fetchLastSync, this, (response) => {
+        let lastSynchTs = 0
+
+        if (response !== null) {
+          lastSynchTs = response
+        }
+
+        const when:Date = new Date(lastSynchTs)
+
+        if (this.syncing) {
+          console.log(`[rex-spider-gemini] Still syncing. Skipping this round...`)
+
+          resolve({
+            sitesCrawled: [this.identifier()],
+            issues: [{
+              url: this.loginUrl(),
+              message: `Still synching since ${when}.`
+            }]
+          })
+        } else {
+          if (Date.now() < lastSynchTs + this.syncPeriod) {
+            console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
+            this.signalComplete(0)
+
+            resolve({
+              sitesCrawled: [this.identifier()],
+              issues: [{
+                url: this.loginUrl(),
+                message: `Too soon to synch since ${when} (period = ${this.syncPeriod}).`
+              }]
+            })
+          } else {
+            const storeMessage = {
+              messageType: 'storeValue',
+              key: 'rex-spider-gemini-last-sync',
+              value: Date.now()
+            }
+
+            rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+              this.syncing = true
+
+              const homeUrl = 'https://gemini.google.com/app'
+
+              fetch(homeUrl, {
+                method: 'GET',
+                credentials: 'include', // Crucial property to send cookies
+              }).then((response: Response) => {
+                if (!response.ok) {
+                  console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
+
+                  this.syncing = false
+                  this.signalComplete(0)
+
+                  resolve({
+                    sitesCrawled: [this.identifier()],
+                    issues: [{
+                      url: this.loginUrl(),
+                      message: `Unable to fetch ${homeUrl}. Status code = ${response.status}.`
+                    }]
+                  })
+                } else {
+                  response.text().then((rawHtml) => {
+                    if (rawHtml.includes('"SNlM0e":"')) {
+                      const startIndex = rawHtml.indexOf('"SNlM0e":"')
+
+                      if (startIndex !== -1) {
+                        const prefixStripped = rawHtml.substring(startIndex)
+
+                        const tokens = prefixStripped.split('"')
+
+                        if (tokens.length > 3) {
+                          this.accessToken = tokens[3]
+                        }
+                      }
+
+                      if (this.accessToken === null) {
+                        this.syncing = false
+                        this.signalComplete(0)
+
+                        resolve({
+                          sitesCrawled: [this.identifier()],
+                          issues: []
+                        })
+                      } else {
+                        this.fetchChats().then((chatList:Conversation[]) => {
+                          let dispatched = 0
+
+                          const uploadConversations = () => {
+                            if (chatList.length <= 0) {
+                              this.syncing = false
+                              this.signalComplete(dispatched)
+
+                              resolve({
+                                sitesCrawled: [this.identifier()],
+                                issues: []
+                              })
+                            } else {
+                              const conversation = chatList.pop()
+
+                              if (conversation !== undefined) {
+                                if (conversation.started.value !== null) {
+                                  const payload: EventPayload = {
+                                    name: 'rex-conversation',
+                                    date: conversation.started.value.epochMilliseconds,
+                                    ...conversation
+                                  }
+
+                                  const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
+
+                                  const fetchLastUpload = {
+                                    messageType: 'fetchValue',
+                                    key: uploadKey
+                                  }
+
+                                  rexCorePlugin.handleMessage(fetchLastUpload, this, (uploadValue) => {
+                                    if (uploadValue === null) {
+                                      dispatchEvent(payload)
+
+                                      dispatched += 1
+
+                                      const storeUpload = {
+                                        messageType: 'storeValue',
+                                        key: uploadKey,
+                                        value: Date.now()
+                                      }
+
+                                      rexCorePlugin.handleMessage(storeUpload, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+                                        uploadConversations()
+                                      })
+                                    } else {
+                                      uploadConversations()
+                                    }
+                                  })
+                                }
+                              }
+                            }
+                          }
+
+                          uploadConversations()
+                        })
+                      }
+                    }
+                  })
+                }
+              })
+              .catch((err) => {
+                console.error(`[rex-spider-gemini] Error encountered fetching conversations:`)
+                console.error(err)
+
+                this.syncing = false
+                this.signalComplete(0)
+
+                resolve({
+                  sitesCrawled: [this.identifier()],
+                  issues: [{
+                    url: this.loginUrl(),
+                    message: `Error fetching conversations: ${err}.`
+                  }]
+                })
+              })
+            })
+          }
+        }
+      })
     })
   }
 }
