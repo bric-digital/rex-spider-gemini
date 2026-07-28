@@ -29,6 +29,13 @@ export class REXGeminiSpider extends REXSpider {
     return 'https://gemini.google.com/app'
   }
 
+  whitelistedUrls():string[] {
+    return [
+      '|https://gemini.google.com/app|',
+      '|https://gemini.google.com/_/BardChatUi/data/batchexecute?*',
+    ]
+  }
+
   fetchInitialUrls(): string[] {
     return []
   }
@@ -335,8 +342,7 @@ export class REXGeminiSpider extends REXSpider {
               message: `Still synching since ${when}.`
             }]
           })
-        } else {
-          if (Date.now() < lastSynchTs + this.syncPeriod) {
+        } else if (Date.now() < lastSynchTs + this.syncPeriod) {
             console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
             this.signalComplete(0)
 
@@ -347,123 +353,24 @@ export class REXGeminiSpider extends REXSpider {
                 message: `Too soon to synch since ${when} (period = ${this.syncPeriod}).`
               }]
             })
-          } else {
-            const storeMessage = {
-              messageType: 'storeValue',
-              key: 'rex-spider-gemini-last-sync',
-              value: Date.now()
-            }
+        } else {
+          const storeMessage = {
+            messageType: 'storeValue',
+            key: 'rex-spider-gemini-last-sync',
+            value: Date.now()
+          }
 
-            rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-              this.syncing = true
+          rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+            this.syncing = true
 
-              const homeUrl = 'https://gemini.google.com/app'
+            const homeUrl = 'https://gemini.google.com/app'
 
-              fetch(homeUrl, {
-                method: 'GET',
-                credentials: 'include', // Crucial property to send cookies
-              }).then((response: Response) => {
-                if (!response.ok) {
-                  console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
-
-                  this.syncing = false
-                  this.signalComplete(0)
-
-                  resolve({
-                    sitesCrawled: [this.identifier()],
-                    issues: [{
-                      url: this.loginUrl(),
-                      message: `Unable to fetch ${homeUrl}. Status code = ${response.status}.`
-                    }]
-                  })
-                } else {
-                  response.text().then((rawHtml) => {
-                    if (rawHtml.includes('"SNlM0e":"')) {
-                      const startIndex = rawHtml.indexOf('"SNlM0e":"')
-
-                      if (startIndex !== -1) {
-                        const prefixStripped = rawHtml.substring(startIndex)
-
-                        const tokens = prefixStripped.split('"')
-
-                        if (tokens.length > 3) {
-                          this.accessToken = tokens[3]
-                        }
-                      }
-
-                      if (this.accessToken === null) {
-                        this.syncing = false
-                        this.signalComplete(0)
-
-                        resolve({
-                          sitesCrawled: [this.identifier()],
-                          issues: []
-                        })
-                      } else {
-                        this.fetchChats().then((chatList:Conversation[]) => {
-                          let dispatched = 0
-
-                          const uploadConversations = () => {
-                            if (chatList.length <= 0) {
-                              this.syncing = false
-                              this.signalComplete(dispatched)
-
-                              resolve({
-                                sitesCrawled: [this.identifier()],
-                                issues: []
-                              })
-                            } else {
-                              const conversation = chatList.pop()
-
-                              if (conversation !== undefined) {
-                                if (conversation.started.value !== null) {
-                                  const payload: EventPayload = {
-                                    name: 'rex-conversation',
-                                    date: conversation.started.value.epochMilliseconds,
-                                    ...conversation
-                                  }
-
-                                  const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
-
-                                  const fetchLastUpload = {
-                                    messageType: 'fetchValue',
-                                    key: uploadKey
-                                  }
-
-                                  rexCorePlugin.handleMessage(fetchLastUpload, this, (uploadValue) => {
-                                    if (uploadValue === null) {
-                                      dispatchEvent(payload)
-
-                                      dispatched += 1
-
-                                      const storeUpload = {
-                                        messageType: 'storeValue',
-                                        key: uploadKey,
-                                        value: Date.now()
-                                      }
-
-                                      rexCorePlugin.handleMessage(storeUpload, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-                                        uploadConversations()
-                                      })
-                                    } else {
-                                      uploadConversations()
-                                    }
-                                  })
-                                }
-                              }
-                            }
-                          }
-
-                          uploadConversations()
-                        })
-                      }
-                    }
-                  })
-                }
-              })
-              .catch((err) => {
-                console.error(`[rex-spider-gemini] Error encountered fetching conversations:`)
-                console.error(err)
+            fetch(homeUrl, {
+              method: 'GET',
+              credentials: 'include', // Crucial property to send cookies
+            }).then((response: Response) => {
+              if (!response.ok) {
+                console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
                 this.syncing = false
                 this.signalComplete(0)
@@ -472,12 +379,110 @@ export class REXGeminiSpider extends REXSpider {
                   sitesCrawled: [this.identifier()],
                   issues: [{
                     url: this.loginUrl(),
-                    message: `Error fetching conversations: ${err}.`
+                    message: `Unable to fetch ${homeUrl}. Status code = ${response.status}.`
                   }]
                 })
+              } else {
+                response.text().then((rawHtml) => {
+                  if (rawHtml.includes('"SNlM0e":"')) {
+                    const startIndex = rawHtml.indexOf('"SNlM0e":"')
+
+                    if (startIndex !== -1) {
+                      const prefixStripped = rawHtml.substring(startIndex)
+
+                      const tokens = prefixStripped.split('"')
+
+                      if (tokens.length > 3) {
+                        this.accessToken = tokens[3]
+                      }
+                    }
+
+                    if (this.accessToken === null) {
+                      this.syncing = false
+                      this.signalComplete(0)
+
+                      resolve({
+                        sitesCrawled: [this.identifier()],
+                        issues: []
+                      })
+                    } else {
+                      this.fetchChats().then((chatList:Conversation[]) => {
+                        let dispatched = 0
+
+                        const uploadConversations = () => {
+                          if (chatList.length <= 0) {
+                            this.syncing = false
+                            this.signalComplete(dispatched)
+
+                            resolve({
+                              sitesCrawled: [this.identifier()],
+                              issues: []
+                            })
+                          } else {
+                            const conversation = chatList.pop()
+
+                            if (conversation !== undefined) {
+                              if (conversation.started.value !== null) {
+                                const payload: EventPayload = {
+                                  name: 'rex-conversation',
+                                  date: conversation.started.value.epochMilliseconds,
+                                  ...conversation
+                                }
+
+                                const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
+
+                                const fetchLastUpload = {
+                                  messageType: 'fetchValue',
+                                  key: uploadKey
+                                }
+
+                                rexCorePlugin.handleMessage(fetchLastUpload, this, (uploadValue) => {
+                                  if (uploadValue === null) {
+                                    dispatchEvent(payload)
+
+                                    dispatched += 1
+
+                                    const storeUpload = {
+                                      messageType: 'storeValue',
+                                      key: uploadKey,
+                                      value: Date.now()
+                                    }
+
+                                    rexCorePlugin.handleMessage(storeUpload, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+                                      uploadConversations()
+                                    })
+                                  } else {
+                                    uploadConversations()
+                                  }
+                                })
+                              }
+                            }
+                          }
+                        }
+
+                        uploadConversations()
+                      })
+                    }
+                  }
+                })
+              }
+            })
+            .catch((err) => {
+              console.error(`[rex-spider-gemini] Error encountered fetching conversations:`)
+              console.error(err)
+
+              this.syncing = false
+              this.signalComplete(0)
+
+              resolve({
+                sitesCrawled: [this.identifier()],
+                issues: [{
+                  url: this.loginUrl(),
+                  message: `Error fetching conversations: ${err}.`
+                }]
               })
             })
-          }
+          })
         }
       })
     })
