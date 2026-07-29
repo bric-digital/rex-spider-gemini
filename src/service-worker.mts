@@ -102,13 +102,14 @@ export class REXGeminiSpider extends REXSpider {
     return parsed
   }
 
-  private signalComplete(crawledCount: number) {
+  private signalComplete(crawledCount: number, crawledIds: string[] = []) {
     setTimeout(() => {
       dispatchEvent({
         name: 'pdk-app-event',
         event_name: 'rex-spider-gemini-complete',
         event_details: {
           crawled_count: crawledCount,
+          crawled_ids: crawledIds,
           date: Date.now()
         }
       })
@@ -246,10 +247,12 @@ export class REXGeminiSpider extends REXSpider {
                         this.fetchChats().then((chatList:Conversation[]) => {
                           let dispatched = 0
 
+                          const crawledIds:string[] = []
+
                           const uploadConversations = () => {
                             if (chatList.length <= 0) {
                               this.syncing = false
-                              this.signalComplete(dispatched)
+                              this.signalComplete(dispatched, crawledIds)
                               resolve(false)
                             } else {
                               const conversation = chatList.pop()
@@ -261,6 +264,8 @@ export class REXGeminiSpider extends REXSpider {
                                     date: conversation.started.value.epochMilliseconds,
                                     ...conversation
                                   }
+
+                                  crawledIds.push(conversation.identifier)
 
                                   const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
 
@@ -369,6 +374,8 @@ export class REXGeminiSpider extends REXSpider {
               method: 'GET',
               credentials: 'include', // Crucial property to send cookies
             }).then((response: Response) => {
+              const crawledIds:string[] = []
+
               if (!response.ok) {
                 console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
@@ -412,7 +419,7 @@ export class REXGeminiSpider extends REXSpider {
                         const uploadConversations = () => {
                           if (chatList.length <= 0) {
                             this.syncing = false
-                            this.signalComplete(dispatched)
+                            this.signalComplete(dispatched, crawledIds)
 
                             resolve({
                               sitesCrawled: [this.identifier()],
@@ -428,6 +435,8 @@ export class REXGeminiSpider extends REXSpider {
                                   date: conversation.started.value.epochMilliseconds,
                                   ...conversation
                                 }
+
+                                crawledIds.push(conversation.identifier)
 
                                 const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
 
