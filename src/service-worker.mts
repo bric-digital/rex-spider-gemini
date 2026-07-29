@@ -151,7 +151,7 @@ export class REXGeminiSpider extends REXSpider {
               if (!response.ok) {
                 console.log(`[rex-spider-gemini] List fetch failed (status ${response.status}).`)
                 this.syncing = false
-                this.signalComplete(0)
+                this.signalComplete(-1)
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
@@ -198,7 +198,7 @@ export class REXGeminiSpider extends REXSpider {
 
           if (Date.now() < timestamp + this.syncPeriod) {
             console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
-            this.signalComplete(0)
+            this.signalComplete(-1)
             resolve(true)
           } else {
             const storeMessage = {
@@ -220,7 +220,7 @@ export class REXGeminiSpider extends REXSpider {
                   console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
                   this.syncing = false
-                  this.signalComplete(0)
+                  this.signalComplete(-1)
 
                   resolve(true)
                 } else {
@@ -240,7 +240,7 @@ export class REXGeminiSpider extends REXSpider {
 
                       if (this.accessToken === null) {
                         this.syncing = false
-                        this.signalComplete(0)
+                        this.signalComplete(-1)
 
                         resolve(true)
                       } else {
@@ -310,7 +310,7 @@ export class REXGeminiSpider extends REXSpider {
                 console.error(err)
 
                 this.syncing = false
-                this.signalComplete(0)
+                this.signalComplete(-1)
 
                 resolve(true)
               })
@@ -349,7 +349,7 @@ export class REXGeminiSpider extends REXSpider {
           })
         } else if (Date.now() < lastSynchTs + this.syncPeriod) {
             console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
-            this.signalComplete(0)
+            this.signalComplete(-1)
 
             resolve({
               sitesCrawled: [this.identifier()],
@@ -380,7 +380,7 @@ export class REXGeminiSpider extends REXSpider {
                 console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
                 this.syncing = false
-                this.signalComplete(0)
+                this.signalComplete(-1)
 
                 resolve({
                   sitesCrawled: [this.identifier()],
@@ -406,7 +406,7 @@ export class REXGeminiSpider extends REXSpider {
 
                     if (this.accessToken === null) {
                       this.syncing = false
-                      this.signalComplete(0)
+                      this.signalComplete(-1)
 
                       resolve({
                         sitesCrawled: [this.identifier()],
@@ -481,7 +481,7 @@ export class REXGeminiSpider extends REXSpider {
               console.error(err)
 
               this.syncing = false
-              this.signalComplete(0)
+              this.signalComplete(-1)
 
               resolve({
                 sitesCrawled: [this.identifier()],
