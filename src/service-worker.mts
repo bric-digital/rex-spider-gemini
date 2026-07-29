@@ -29,7 +29,7 @@ export class REXGeminiSpider extends REXSpider {
     return 'https://gemini.google.com/app'
   }
 
-  whitelistedUrls():string[] {
+  allowedUrls():string[] {
     return [
       '|https://gemini.google.com/app|',
       '|https://gemini.google.com/_/BardChatUi/data/batchexecute?*',
