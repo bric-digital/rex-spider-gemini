@@ -102,7 +102,7 @@ export class REXGeminiSpider extends REXSpider {
     return parsed
   }
 
-  private signalComplete(crawledCount: number, crawledIds: string[] = []) {
+  private signalComplete(crawledCount: number, crawledIds: string[] = [], reason:string = 'None given') {
     setTimeout(() => {
       dispatchEvent({
         name: 'pdk-app-event',
@@ -110,6 +110,7 @@ export class REXGeminiSpider extends REXSpider {
         event_details: {
           crawled_count: crawledCount,
           crawled_ids: crawledIds,
+          reason,
           date: Date.now()
         }
       })
@@ -151,7 +152,7 @@ export class REXGeminiSpider extends REXSpider {
               if (!response.ok) {
                 console.log(`[rex-spider-gemini] List fetch failed (status ${response.status}).`)
                 this.syncing = false
-                this.signalComplete(-1)
+                this.signalComplete(-1, [], `List fetch failed (status ${response.status}) [0001].`)
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
@@ -198,7 +199,7 @@ export class REXGeminiSpider extends REXSpider {
 
           if (Date.now() < timestamp + this.syncPeriod) {
             console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
-            this.signalComplete(-1)
+            this.signalComplete(-1, [], `Too soon to sync again.`)
             resolve(true)
           } else {
             const storeMessage = {
@@ -220,7 +221,7 @@ export class REXGeminiSpider extends REXSpider {
                   console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
                   this.syncing = false
-                  this.signalComplete(-1)
+                  this.signalComplete(-1, [], `Homepage fetch failed (status ${response.status}).`)
 
                   resolve(true)
                 } else {
@@ -240,7 +241,7 @@ export class REXGeminiSpider extends REXSpider {
 
                       if (this.accessToken === null) {
                         this.syncing = false
-                        this.signalComplete(-1)
+                        this.signalComplete(-1, [], `No access token.`)
 
                         resolve(true)
                       } else {
@@ -252,7 +253,7 @@ export class REXGeminiSpider extends REXSpider {
                           const uploadConversations = () => {
                             if (chatList.length <= 0) {
                               this.syncing = false
-                              this.signalComplete(dispatched, crawledIds)
+                              this.signalComplete(dispatched, crawledIds, 'Fetch successful.')
                               resolve(false)
                             } else {
                               const conversation = chatList.pop()
@@ -310,7 +311,7 @@ export class REXGeminiSpider extends REXSpider {
                 console.error(err)
 
                 this.syncing = false
-                this.signalComplete(-1)
+                this.signalComplete(-1, [], `Error encountered fetching conversations: ${err}`)
 
                 resolve(true)
               })
@@ -349,7 +350,7 @@ export class REXGeminiSpider extends REXSpider {
           })
         } else if (Date.now() < lastSynchTs + this.syncPeriod) {
             console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
-            this.signalComplete(-1)
+            this.signalComplete(-1, [], `Too soon to sync again.`)
 
             resolve({
               sitesCrawled: [this.identifier()],
@@ -380,7 +381,7 @@ export class REXGeminiSpider extends REXSpider {
                 console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
 
                 this.syncing = false
-                this.signalComplete(-1)
+                this.signalComplete(-1, [], `Homepage fetch failed (status ${response.status}).`)
 
                 resolve({
                   sitesCrawled: [this.identifier()],
@@ -406,7 +407,7 @@ export class REXGeminiSpider extends REXSpider {
 
                     if (this.accessToken === null) {
                       this.syncing = false
-                      this.signalComplete(-1)
+                      this.signalComplete(-1, [], `No access token`)
 
                       resolve({
                         sitesCrawled: [this.identifier()],
@@ -419,7 +420,7 @@ export class REXGeminiSpider extends REXSpider {
                         const uploadConversations = () => {
                           if (chatList.length <= 0) {
                             this.syncing = false
-                            this.signalComplete(dispatched, crawledIds)
+                            this.signalComplete(dispatched, crawledIds, 'Fetch successful.')
 
                             resolve({
                               sitesCrawled: [this.identifier()],
@@ -481,7 +482,7 @@ export class REXGeminiSpider extends REXSpider {
               console.error(err)
 
               this.syncing = false
-              this.signalComplete(-1)
+              this.signalComplete(-1, [], `Error encountered fetching conversations: ${err}`)
 
               resolve({
                 sitesCrawled: [this.identifier()],
