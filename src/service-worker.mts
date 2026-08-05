@@ -196,7 +196,7 @@ export class REXGeminiSpider extends REXSpider {
 
                   console.log(`[rex-spider-gemini] request: ${JSON.stringify(nextPayload)}`)
                   console.log(`[rex-spider-gemini] rawBody: ${rawBody}`)
-                  console.log(`[rex-spider-gemini] nextToken: ${nextToken}`)
+                  console.log(`[rex-spider-gemini] nextToken: ${nextToken} -- ${typeof nextToken}`)
 
                   if (nextToken !== null) {
                     const newRequestWrapper = JSON.parse(nextPayload['f.req'])
