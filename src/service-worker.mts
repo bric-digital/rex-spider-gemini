@@ -125,10 +125,10 @@ export class REXGeminiSpider extends REXSpider {
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
 
       const payloads = [{
-        'f.req': '[[["MaZiqc","[13,null,[0,null,1]]",null,"generic"]]]',
+        'f.req': '[[["MaZiqc","[5,null,[0,null,1]]",null,"generic"]]]', // 13 -> 5
         'at': (this.accessToken as string)
       }, {
-        'f.req': '[[["MaZiqc","[13,null,[1,null,1]]",null,"generic"]]]',
+        'f.req': '[[["MaZiqc","[5,null,[1,null,1]]",null,"generic"]]]', // 13 -> 5
         'at': (this.accessToken as string)
       }]
 
@@ -156,6 +156,7 @@ export class REXGeminiSpider extends REXSpider {
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
+                  console.log(`rawBody: ${rawBody}`)
                   const parsed = this.parseChatList(rawBody)
 
                   if (parsed !== null) {
@@ -340,6 +341,8 @@ export class REXGeminiSpider extends REXSpider {
 
         if (this.syncing) {
           console.log(`[rex-spider-gemini] Still syncing. Skipping this round...`)
+
+          this.signalComplete(-1, [], `Still synching.`)
 
           resolve({
             sitesCrawled: [this.identifier()],
