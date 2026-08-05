@@ -7,6 +7,8 @@ import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/servi
 import rexSpiderPlugin, { REXSpider, REXSpiderCrawlResult } from '@bric/rex-spider/service-worker'
 
 export class REXGeminiSpider extends REXSpider {
+  PAGE_SIZE:number = 10
+
   sleepDelayMs:number = 10000
   syncing:boolean = false
   lastSync:number = 0
@@ -159,10 +161,10 @@ export class REXGeminiSpider extends REXSpider {
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
 
       const payloads = [{
-        'f.req': '[[["MaZiqc","[100,null,[0,null,1]]",null,"generic"]]]', // 13 -> 5
+        'f.req': `[[["MaZiqc","[${this.PAGE_SIZE},null,[0,null,1]]",null,"generic"]]]`,
         'at': (this.accessToken as string)
       }, {
-        'f.req': '[[["MaZiqc","[100,null,[1,null,1]]",null,"generic"]]]', // 13 -> 5
+        'f.req': `[[["MaZiqc","[${this.PAGE_SIZE},null,[1,null,1]]",null,"generic"]]]`,
         'at': (this.accessToken as string)
       }]
 
