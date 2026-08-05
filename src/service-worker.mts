@@ -61,7 +61,7 @@ export class REXGeminiSpider extends REXSpider {
     })
   }
 
-  parseChatList(rawChatListData:string) : Conversation[] {
+  parseChatList(rawChatListData:string) : Conversation[] | null {
     try {
       if (rawChatListData.startsWith(')]}\'')) {
         rawChatListData = rawChatListData.substring(4).trim()
