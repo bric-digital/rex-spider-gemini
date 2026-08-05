@@ -62,20 +62,23 @@ export class REXGeminiSpider extends REXSpider {
   }
 
   parseChatList(rawChatListData:string) : Conversation[] {
-    const parsed:Conversation[] = []
- 
     try {
       if (rawChatListData.startsWith(')]}\'')) {
         rawChatListData = rawChatListData.substring(4).trim()
 
         const lines = rawChatListData.split(/\r?\n/)
 
+        const parsed:Conversation[] = []
+        let foundValidResponse:boolean = false
+ 
         for (const line of lines) {
           if (line.startsWith('[[')) {
             const parsedLine = JSON.parse(line)
 
             for (const message of parsedLine) {
               if (message.length > 2 && message[1] === 'MaZiqc') {
+                foundValidResponse = true
+
                 const chatList = JSON.parse(message[2])
 
                 if (check.array(chatList[2])) {
@@ -83,7 +86,7 @@ export class REXGeminiSpider extends REXSpider {
                     const conversation:Conversation = {
                       identifier: chat[0],
                       turns: [],
-                      platform: 'google-ai-gemini',
+                      platform: 'gemini',
                       started: new DateString(chat[5][0]),
                       metadata: chat
                     }
@@ -95,13 +98,17 @@ export class REXGeminiSpider extends REXSpider {
             }
           }
         }
+
+        if (foundValidResponse) {
+          return parsed
+        }
       }
     } catch (err) {
       console.error(`[rex-spider-gemini] Error parsing conversation:`)
       console.error(err)
     }
 
-    return parsed
+    return null
   }
 
   fetchNextPageToken(rawChatListData:string) : string | null {
