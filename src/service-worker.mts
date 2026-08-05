@@ -376,6 +376,13 @@ export class REXGeminiSpider extends REXSpider {
                           uploadConversations()
                         })
                       }
+                    } else {
+                      console.log(`[rex-spider-gemini] Failed to locate access token on homepage page.`)
+
+                      this.syncing = false
+                      this.signalComplete(-1, [], ` Failed to locate access token on homepage page.`)
+
+                      resolve(true)
                     }
                   })
                 }
@@ -549,6 +556,19 @@ export class REXGeminiSpider extends REXSpider {
                         uploadConversations()
                       })
                     }
+                  } else {
+                    console.log(`[rex-spider-gemini] Failed to locate access token on homepage page.`)
+
+                    this.syncing = false
+                    this.signalComplete(-1, [], `Failed to locate access token on homepage page.`)
+
+                    resolve({
+                      sitesCrawled: [this.identifier()],
+                      issues: [{
+                        url: this.loginUrl(),
+                        message: `Failed to locate access token on homepage page.`
+                      }]
+                    })
                   }
                 })
               }
