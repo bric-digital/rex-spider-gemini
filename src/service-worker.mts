@@ -230,9 +230,15 @@ export class REXGeminiSpider extends REXSpider {
                     for (const chat of parsed) {
                       chats.push(chat)
                     }
-                  }
 
-                  fetchNext()
+                    fetchNext()
+                  } else {
+                    console.log(`[rex-spider-gemini] Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
+                    this.syncing = false
+                    this.signalComplete(-1, [], `Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
+                    
+                    reject(`Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
+                  }
                 })
               }
             })
