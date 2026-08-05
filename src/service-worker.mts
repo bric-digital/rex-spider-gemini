@@ -192,9 +192,11 @@ export class REXGeminiSpider extends REXSpider {
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
-                  console.log(`request: ${JSON.stringify(nextPayload)}`)
-                  console.log(`rawBody: ${rawBody}`)
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
+
+                  console.log(`[rex-spider-gemini] request: ${JSON.stringify(nextPayload)}`)
+                  console.log(`[rex-spider-gemini] rawBody: ${rawBody}`)
+                  console.log(`[rex-spider-gemini] nextToken: ${nextToken}`)
 
                   if (nextToken !== null) {
                     const newRequestWrapper = JSON.parse(nextPayload['f.req'])
@@ -211,6 +213,8 @@ export class REXGeminiSpider extends REXSpider {
                     }
 
                     payloads.push(newPayload)
+
+                    console.log(`[rex-spider-gemini] pushed new request: ${JSON.stringify(newPayload)}`)
                   }
 
                   const parsed = this.parseChatList(rawBody)
