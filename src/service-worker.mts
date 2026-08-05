@@ -192,6 +192,7 @@ export class REXGeminiSpider extends REXSpider {
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
+                  console.log(`request: ${JSON.stringify(nextPayload)}`)
                   console.log(`rawBody: ${rawBody}`)
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
 
