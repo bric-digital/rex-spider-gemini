@@ -102,6 +102,40 @@ export class REXGeminiSpider extends REXSpider {
     return parsed
   }
 
+  fetchNextPageToken(rawChatListData:string) : string | null {
+    // Raw payload:
+    // [["wrb.fr","MaZiqc","[null,\"TOKEN\",[[CONVERSATIONS]]]", ...]]
+
+    try {
+      if (rawChatListData.startsWith(')]}\'')) {
+        rawChatListData = rawChatListData.substring(4).trim()
+
+        const lines = rawChatListData.split(/\r?\n/)
+
+        for (const line of lines) {
+          if (line.startsWith('[[')) {
+            const parsedLine = JSON.parse(line)
+
+            for (const message of parsedLine) {
+              if (message.length > 2 && message[1] === 'MaZiqc') {
+                const chatList = JSON.parse(message[2])
+
+                // Return string serving as next page token.
+
+                return chatList[1]
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`[rex-spider-gemini] Error parsing conversation:`)
+      console.error(err)
+    }
+
+    return null
+  }
+
   private signalComplete(crawledCount: number, crawledIds: string[] = [], reason:string = 'None given') {
     setTimeout(() => {
       dispatchEvent({
@@ -157,6 +191,25 @@ export class REXGeminiSpider extends REXSpider {
               } else {
                 response.text().then((rawBody) => {
                   console.log(`rawBody: ${rawBody}`)
+                  const nextToken:string|null = this.fetchNextPageToken(rawBody)
+
+                  if (nextToken !== null) {
+                    const newRequestWrapper = JSON.parse(nextPayload['f.req'])
+
+                    const newRequest = JSON.parse(newRequestWrapper[0][0][1])
+
+                    newRequest[1] = nextToken
+
+                    newRequestWrapper[0][0][1] = JSON.stringify(newRequest)
+
+                    const newPayload = {
+                      'at': nextPayload['at'],
+                      'f.req': JSON.stringify(newRequestWrapper)
+                    }
+
+                    payloads.push(newPayload)
+                  }
+
                   const parsed = this.parseChatList(rawBody)
 
                   if (parsed !== null) {
