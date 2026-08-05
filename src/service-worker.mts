@@ -124,7 +124,11 @@ export class REXGeminiSpider extends REXSpider {
 
                 // Return string serving as next page token.
 
-                return chatList[1]
+                if (chatList.length > 2) {
+                  return chatList[1]
+                }
+
+                return null
               }
             }
           }
