@@ -208,7 +208,7 @@ export class REXGeminiSpider extends REXSpider {
                       chats.push(chat)
                     }
 
-                    fetchNext()
+                    setTimeout(fetchNext, this.fetchCrawlDelay())
                   } else {
                     this.signalCrawlComplete(-1, [], `Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
                     
@@ -218,7 +218,7 @@ export class REXGeminiSpider extends REXSpider {
               }
             })
           } else {
-            fetchNext()
+            setTimeout(fetchNext, this.fetchCrawlDelay())
           }        
         }
       }
