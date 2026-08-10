@@ -4,7 +4,7 @@ import { Conversation, DateString } from '@bric/rex-types/types'
 
 import { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
 
-import rexSpiderPlugin, { REXSpider, REXSpiderCrawlResult } from '@bric/rex-spider/service-worker'
+import rexSpiderPlugin, { REXSpider, REXSpiderCrawlResult, REXSpiderCrawlInspection } from '@bric/rex-spider/service-worker'
 
 const GEMINI_SPIDER_PAGE_SIZE = 10
 
@@ -83,7 +83,7 @@ export class REXGeminiSpider extends REXSpider {
                       identifier: chat[0],
                       turns: [],
                       platform: 'gemini',
-                      started: new DateString(chat[5][0]),
+                      ended: new DateString(chat[5][0]),
                       metadata: chat
                     }
 
@@ -145,8 +145,8 @@ export class REXGeminiSpider extends REXSpider {
     return null
   }
 
-  fetchChats(): Promise<Conversation[]> {
-    return new Promise<Conversation[]>((resolve, reject) => {
+  fetchChats(): Promise<REXSpiderCrawlInspection[]> {
+    return new Promise<REXSpiderCrawlInspection[]>((resolve, reject) => {
       const requestId = Math.floor(Math.random() * (999999 - 10000)) + 10000
 
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
@@ -159,11 +159,11 @@ export class REXGeminiSpider extends REXSpider {
         'at': (this.accessToken as string)
       }]
 
-      const chats:Conversation[] = []
+      const checkedRecords:REXSpiderCrawlInspection[] = []
 
       const fetchNext = () => {
-        if (payloads.length <= 0) {
-          resolve(chats)
+        if (payloads.length == 0) {
+          resolve(checkedRecords)
         } else {
           const nextPayload = payloads.pop()
 
@@ -201,14 +201,32 @@ export class REXGeminiSpider extends REXSpider {
                     payloads.push(newPayload)
                   }
 
-                  const parsed = this.parseChatList(rawBody)
+                  const parsed:Conversation[] | null = this.parseChatList(rawBody)
 
                   if (parsed !== null) {
-                    for (const chat of parsed) {
-                      chats.push(chat)
-                    }
+                    const checkNextConversation = () => {
+                      if (parsed.length === 0) {
+                        setTimeout(fetchNext, this.fetchCrawlDelay())
+                      } else {
+                        const nextConvo:Conversation | undefined = parsed.pop()
 
-                    setTimeout(fetchNext, this.fetchCrawlDelay())
+                        if (nextConvo !== undefined && nextConvo.ended !== undefined) {
+                          const uploadKey = `rex-spider-gemini-upload-${nextConvo.identifier}-${nextConvo.ended.toJSON()}`
+
+                          this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
+                            checkedRecords.push({
+                              id: nextConvo.identifier,
+                              refresh: false,
+                              conversation: nextConvo
+                            })
+
+                            checkNextConversation()
+                          })
+                        } else {
+                          checkNextConversation()
+                        }
+                      }
+                    }
                   } else {
                     this.signalCrawlComplete(-1, [], `Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
                     
@@ -273,11 +291,11 @@ export class REXGeminiSpider extends REXSpider {
                   }]
                 })
               } else {
-                this.fetchChats().then((chatList:Conversation[]) => {
+                this.fetchChats().then((inspectionRecords:REXSpiderCrawlInspection[]) => {
                   let dispatched = 0
 
-                  const uploadConversations = () => {
-                    if (chatList.length <= 0) {
+                  const processNextConversation = () => {
+                    if (inspectionRecords.length <= 0) {
                       this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
 
                       resolve({
@@ -285,37 +303,51 @@ export class REXGeminiSpider extends REXSpider {
                         issues: []
                       })
                     } else {
-                      const conversation = chatList.pop()
+                      const inspectionRecord:REXSpiderCrawlInspection | undefined = inspectionRecords.pop()
 
-                      if (conversation !== undefined) {
-                        if (conversation.started.value !== null) {
-                          const payload: EventPayload = {
-                            name: 'rex-conversation',
-                            date: conversation.started.value.epochMilliseconds,
-                            ...conversation
+                      if (inspectionRecord !== undefined && inspectionRecord.conversation !== undefined) {
+                        crawledIds.push(inspectionRecord.id)
+
+                        const conversation:Conversation = inspectionRecord.conversation
+
+                        if (conversation.ended !== undefined) {
+                          const ended:DateString = conversation.ended
+
+                          if (inspectionRecord.refresh) {
+                            const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.ended.toJSON()}`
+
+                            this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
+                              if (transmitted === false && ended.value !== null) {
+                                const payload: EventPayload = {
+                                  name: 'rex-conversation',
+                                  date: ended.value.epochMilliseconds,
+                                  ...conversation
+                                }
+
+                                dispatchEvent(payload)
+
+                                dispatched += 1
+
+                                this.logTransmitted(uploadKey).then(() => {
+                                  processNextConversation()
+                                })
+                              } else {
+                                processNextConversation()
+                              }
+                            })
+                          } else {
+                            processNextConversation()
                           }
-
-                          crawledIds.push(conversation.identifier)
-
-                          const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
-
-                          this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
-                            if (transmitted === false) {
-                              dispatchEvent(payload)
-
-                              dispatched += 1
-
-                              this.logTransmitted(uploadKey).then(() => {
-                                uploadConversations()
-                              })
-                            }
-                          })
+                        } else {
+                          processNextConversation()
                         }
+                      } else {
+                        processNextConversation()
                       }
                     }
                   }
 
-                  uploadConversations()
+                  processNextConversation()
                 }).catch((err) => {
                   this.signalCrawlComplete(-1, [], `Error encountered parsing conversations: ${err}.`)
 
