@@ -211,16 +211,30 @@ export class REXGeminiSpider extends REXSpider {
                         const nextConvo:Conversation | undefined = parsed.pop()
 
                         if (nextConvo !== undefined && nextConvo.ended !== undefined) {
-                          const uploadKey = `rex-spider-gemini-upload-${nextConvo.identifier}-${nextConvo.ended.toJSON()}`
+                          this.crawlWindowContains(nextConvo.ended.timestamp()).then((include) => {
+                            if (include && nextConvo.ended !== undefined) {
+                              const uploadKey = `rex-spider-gemini-upload-${nextConvo.identifier}-${nextConvo.ended.toJSON()}`
 
-                          this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
-                            checkedRecords.push({
-                              id: nextConvo.identifier,
-                              refresh: false,
-                              conversation: nextConvo
-                            })
+                              this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
+                                if (transmitted) {
+                                  checkedRecords.push({
+                                    id: nextConvo.identifier,
+                                    refresh: false,
+                                    conversation: nextConvo
+                                  })
+                                } else {
+                                  checkedRecords.push({
+                                    id: nextConvo.identifier,
+                                    refresh: true,
+                                    conversation: nextConvo
+                                  })
+                                }
 
-                            checkNextConversation()
+                                checkNextConversation()
+                              })
+                            } else {
+                              checkNextConversation()
+                            }
                           })
                         } else {
                           checkNextConversation()
