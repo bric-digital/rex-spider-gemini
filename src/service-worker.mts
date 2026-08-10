@@ -177,7 +177,7 @@ export class REXGeminiSpider extends REXSpider {
               body: new URLSearchParams(nextPayload)
             }).then((response: Response) => {
               if (!response.ok) {
-                this.signalCrawlComplete(-1, [], `List fetch failed (status ${response.status}) [0001].`)
+                this.signalCrawlComplete(-1, [], `List fetch failed (status ${response.status}).`)
 
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
@@ -241,6 +241,8 @@ export class REXGeminiSpider extends REXSpider {
                         }
                       }
                     }
+
+                    checkNextConversation()
                   } else {
                     this.signalCrawlComplete(-1, [], `Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
                     
@@ -261,152 +263,145 @@ export class REXGeminiSpider extends REXSpider {
 
   doBackgroundCrawl():Promise<REXSpiderCrawlResult> {
     return new Promise<REXSpiderCrawlResult>((resolve) => {
-      const homeUrl = 'https://gemini.google.com/app'
+      super.doBackgroundCrawl().then((crawlResult:REXSpiderCrawlResult) => {
+        const homeUrl = 'https://gemini.google.com/app'
 
-      fetch(homeUrl, {
-        method: 'GET',
-        credentials: 'include', // Crucial property to send cookies
-      }).then((response: Response) => {
-        const crawledIds:string[] = []
+        fetch(homeUrl, {
+          method: 'GET',
+          credentials: 'include', // Crucial property to send cookies
+        }).then((response: Response) => {
+          const crawledIds:string[] = []
 
-        if (!response.ok) {
-          this.signalCrawlComplete(-1, [], `Homepage fetch failed (status ${response.status}).`)
+          if (!response.ok) {
+            this.signalCrawlComplete(-1, [], `Homepage fetch failed (status ${response.status}).`)
 
-          resolve({
-            sitesCrawled: [this.identifier()],
-            issues: [{
+            crawlResult.issues.push({
               url: this.loginUrl(),
               message: `Unable to fetch ${homeUrl}. Status code = ${response.status}.`
-            }]
-          })
-        } else {
-          response.text().then((rawHtml) => {
-            if (rawHtml.includes('"SNlM0e":"')) {
-              const startIndex = rawHtml.indexOf('"SNlM0e":"')
+            })
 
-              if (startIndex !== -1) {
-                const prefixStripped = rawHtml.substring(startIndex)
+            resolve(crawlResult)
+          } else {
+            response.text().then((rawHtml) => {
+              if (rawHtml.includes('"SNlM0e":"')) {
+                const startIndex = rawHtml.indexOf('"SNlM0e":"')
 
-                const tokens = prefixStripped.split('"')
+                if (startIndex !== -1) {
+                  const prefixStripped = rawHtml.substring(startIndex)
 
-                if (tokens.length > 3) {
-                  this.accessToken = tokens[3]
+                  const tokens = prefixStripped.split('"')
+
+                  if (tokens.length > 3) {
+                    this.accessToken = tokens[3]
+                  }
                 }
-              }
 
-              if (this.accessToken === null) {
-                this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
+                if (this.accessToken === null) {
+                  this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
 
-                resolve({
-                  sitesCrawled: [this.identifier()],
-                  issues: [{
+                  crawlResult.issues.push({
                     url: this.loginUrl(),
                     message: `No access token found on homepage.`
-                  }]
-                })
-              } else {
-                this.fetchChats().then((inspectionRecords:REXSpiderCrawlInspection[]) => {
-                  let dispatched = 0
+                  })
 
-                  const processNextConversation = () => {
-                    if (inspectionRecords.length <= 0) {
-                      this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
+                  resolve(crawlResult)
+                } else {
+                  this.fetchChats().then((inspectionRecords:REXSpiderCrawlInspection[]) => {
+                    let dispatched = 0
 
-                      resolve({
-                        sitesCrawled: [this.identifier()],
-                        issues: []
-                      })
-                    } else {
-                      const inspectionRecord:REXSpiderCrawlInspection | undefined = inspectionRecords.pop()
+                    const processNextConversation = () => {
+                      if (inspectionRecords.length <= 0) {
+                        this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
 
-                      if (inspectionRecord !== undefined && inspectionRecord.conversation !== undefined) {
-                        crawledIds.push(inspectionRecord.id)
+                        resolve(crawlResult)
+                      } else {
+                        const inspectionRecord:REXSpiderCrawlInspection | undefined = inspectionRecords.pop()
 
-                        const conversation:Conversation = inspectionRecord.conversation
+                        if (inspectionRecord !== undefined && inspectionRecord.conversation !== undefined) {
+                          crawledIds.push(inspectionRecord.id)
 
-                        if (conversation.ended !== undefined) {
-                          const ended:DateString = conversation.ended
+                          const conversation:Conversation = inspectionRecord.conversation
 
-                          if (inspectionRecord.refresh) {
-                            const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.ended.toJSON()}`
+                          if (conversation.ended !== undefined) {
+                            const ended:DateString = conversation.ended
 
-                            this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
-                              if (transmitted === false && ended.value !== null) {
-                                const payload: EventPayload = {
-                                  name: 'rex-conversation',
-                                  date: ended.value.epochMilliseconds,
-                                  ...conversation
-                                }
+                            if (inspectionRecord.refresh) {
+                              const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.ended.toJSON()}`
 
-                                dispatchEvent(payload)
+                              this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
+                                if (transmitted === false && ended.value !== null) {
+                                  const payload: EventPayload = {
+                                    name: 'rex-conversation',
+                                    date: ended.value.epochMilliseconds,
+                                    ...conversation
+                                  }
 
-                                dispatched += 1
+                                  dispatchEvent(payload)
 
-                                this.logTransmitted(uploadKey).then(() => {
+                                  dispatched += 1
+
+                                  this.logTransmitted(uploadKey).then(() => {
+                                    processNextConversation()
+                                  })
+                                } else {
                                   processNextConversation()
-                                })
-                              } else {
-                                processNextConversation()
-                              }
-                            })
+                                }
+                              })
+                            } else {
+                              processNextConversation()
+                            }
                           } else {
                             processNextConversation()
                           }
                         } else {
                           processNextConversation()
                         }
-                      } else {
-                        processNextConversation()
                       }
                     }
-                  }
 
-                  processNextConversation()
-                }).catch((err) => {
-                  this.signalCrawlComplete(-1, [], `Error encountered parsing conversations: ${err}.`)
+                    processNextConversation()
+                  }).catch((err) => {
+                    this.signalCrawlComplete(-1, [], `Error encountered parsing conversations: ${err}.`)
 
-                  resolve({
-                    sitesCrawled: [this.identifier()],
-                    issues: [{
+                    crawlResult.issues.push({
                       url: this.loginUrl(),
                       message: `Error encountered parsing conversations: ${err}.`
-                    }]
-                  })
-                })
-              }
-            } else {
-              this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
+                    })
 
-              resolve({
-                sitesCrawled: [this.identifier()],
-                issues: [{
+                    resolve(crawlResult)
+                  })
+                }
+              } else {
+                this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
+
+                crawlResult.issues.push({
                   url: this.loginUrl(),
                   message: `No access token found on homepage.`
-                }]
-              })
-            }
-          })
-          .catch((err) => {
-            this.signalCrawlComplete(-1, [], `Error encountered fetching conversations: ${err}.`)
+                })
 
-            resolve({
-              sitesCrawled: [this.identifier()],
-              issues: [{
+                resolve(crawlResult)
+              }
+            })
+            .catch((err) => {
+              this.signalCrawlComplete(-1, [], `Error encountered fetching conversations: ${err}.`)
+
+              crawlResult.issues.push({
                 url: this.loginUrl(),
                 message: `Error fetching conversations: ${err}.`
-              }]
-            })
-          })
-        }
-      }).catch((err) => {
-        this.signalCrawlComplete(-1, [], `Error encountered fetching network resource: ${err}.`)
+              })
 
-        resolve({
-          sitesCrawled: [this.identifier()],
-          issues: [{
+              resolve(crawlResult)
+            })
+          }
+        }).catch((err) => {
+          this.signalCrawlComplete(-1, [], `Error encountered fetching network resource: ${err}.`)
+
+          crawlResult.issues.push({
             url: this.loginUrl(),
             message: `Error encountered fetching network resource: ${err}.`
-          }]
+          })
+
+          resolve(crawlResult)
         })
       })
     })
