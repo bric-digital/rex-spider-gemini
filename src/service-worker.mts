@@ -213,21 +213,23 @@ export class REXGeminiSpider extends REXSpider {
                         if (nextConvo !== undefined && nextConvo.ended !== undefined) {
                           this.crawlWindowContains(nextConvo.ended.timestamp()).then((include) => {
                             if (include && nextConvo.ended !== undefined) {
-                              const uploadKey = `rex-spider-gemini-upload-${nextConvo.identifier}-${nextConvo.ended.toJSON()}`
-
-                              this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
-                                if (transmitted) {
-                                  checkedRecords.push({
-                                    id: nextConvo.identifier,
-                                    refresh: false,
-                                    conversation: nextConvo
-                                  })
-                                } else {
-                                  checkedRecords.push({
-                                    id: nextConvo.identifier,
-                                    refresh: true,
-                                    conversation: nextConvo
-                                  })
+                              this.checkIfAlreadyTransmitted(nextConvo.identifier, nextConvo.ended).then((transmitted:boolean) => {
+                                if (nextConvo.ended !== undefined) {
+                                  if (transmitted) {
+                                    checkedRecords.push({
+                                      id: nextConvo.identifier,
+                                      refresh: false,
+                                      conversation: nextConvo,
+                                      lookupDate: nextConvo.ended
+                                    })
+                                  } else {
+                                    checkedRecords.push({
+                                      id: nextConvo.identifier,
+                                      refresh: true,
+                                      conversation: nextConvo,
+                                      lookupDate: nextConvo.ended
+                                    })
+                                  }
                                 }
 
                                 checkNextConversation()
@@ -326,9 +328,7 @@ export class REXGeminiSpider extends REXSpider {
                             const ended:DateString = conversation.ended
 
                             if (inspectionRecord.refresh) {
-                              const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.ended.toJSON()}`
-
-                              this.checkIfAlreadyTransmitted(uploadKey).then((transmitted:boolean) => {
+                              this.checkIfAlreadyTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then((transmitted:boolean) => {
                                 if (transmitted === false && ended.value !== null) {
                                   const payload: EventPayload = {
                                     name: 'rex-conversation',
@@ -340,7 +340,7 @@ export class REXGeminiSpider extends REXSpider {
 
                                   dispatched += 1
 
-                                  this.logTransmitted(uploadKey).then(() => {
+                                  this.logTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then(() => {
                                     processNextConversation()
                                   })
                                 } else {
@@ -361,7 +361,7 @@ export class REXGeminiSpider extends REXSpider {
 
                     processNextConversation()
                   }).catch((err) => {
-                    this.signalCrawlComplete(-1, [], `Error encountered parsing conversations: ${err}.`)
+                    this.signalCrawlComplete(-1, crawledIds, `Error encountered parsing conversations: ${err}.`)
 
                     crawlResult.issues.push({
                       url: this.loginUrl(),
@@ -372,7 +372,7 @@ export class REXGeminiSpider extends REXSpider {
                   })
                 }
               } else {
-                this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
+                this.signalCrawlComplete(-1, crawledIds, `No access token found on homepage.`)
 
                 crawlResult.issues.push({
                   url: this.loginUrl(),
@@ -383,7 +383,7 @@ export class REXGeminiSpider extends REXSpider {
               }
             })
             .catch((err) => {
-              this.signalCrawlComplete(-1, [], `Error encountered fetching conversations: ${err}.`)
+              this.signalCrawlComplete(-1, crawledIds, `Error encountered fetching conversations: ${err}.`)
 
               crawlResult.issues.push({
                 url: this.loginUrl(),
