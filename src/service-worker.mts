@@ -40,20 +40,23 @@ export class REXGeminiSpider extends REXSpider {
 
   checkLogin(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      fetch(this.loginUrl())
-        .then((response: Response) => {
-          if (response.ok) {
-            response.text().then((rawHtml) => {
-              if (rawHtml.includes("<span class=\"gb_ie\">Sign in</span>")) {
-                  resolve(false)
-              } else {
-                resolve(true)
-              }
-            })
-          } else {
-            resolve(false)
-          }
-        })
+      fetch(this.loginUrl()).then((response: Response) => {
+        if (response.ok) {
+          response.text().then((rawHtml) => {
+            if (rawHtml.includes("<span class=\"gb_ie\">Sign in</span>")) {
+                resolve(false)
+            } else {
+              resolve(true)
+            }
+          })
+        } else {
+          resolve(false)
+        }
+      }).catch((err) => {
+        console.log(`[rex-spider-gemini] Error fetching login page (${this.loginUrl()}): ${err}`)
+
+        resolve(false)
+      })
     })
   }
 
@@ -248,6 +251,8 @@ export class REXGeminiSpider extends REXSpider {
 
                     checkNextConversation()
                   } else {
+                    nextPayload.at = '<redacted>'
+                    
                     reject(`Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
                   }
                 })
