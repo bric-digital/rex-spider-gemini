@@ -177,8 +177,6 @@ export class REXGeminiSpider extends REXSpider {
               body: new URLSearchParams(nextPayload)
             }).then((response: Response) => {
               if (!response.ok) {
-                this.signalCrawlComplete(-1, [], `List fetch failed (status ${response.status}).`)
-
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
@@ -211,33 +209,37 @@ export class REXGeminiSpider extends REXSpider {
                         const nextConvo:Conversation | undefined = parsed.pop()
 
                         if (nextConvo !== undefined && nextConvo.ended !== undefined) {
-                          this.crawlWindowContains(nextConvo.ended.timestamp()).then((include) => {
-                            if (include && nextConvo.ended !== undefined) {
-                              this.checkIfAlreadyTransmitted(nextConvo.identifier, nextConvo.ended).then((transmitted:boolean) => {
-                                if (nextConvo.ended !== undefined) {
-                                  if (transmitted) {
-                                    checkedRecords.push({
-                                      id: nextConvo.identifier,
-                                      refresh: false,
-                                      conversation: nextConvo,
-                                      lookupDate: nextConvo.ended
-                                    })
-                                  } else {
-                                    checkedRecords.push({
-                                      id: nextConvo.identifier,
-                                      refresh: true,
-                                      conversation: nextConvo,
-                                      lookupDate: nextConvo.ended
-                                    })
+                          try {
+                            this.crawlWindowContains(nextConvo.ended.timestamp()).then((include) => {
+                              if (include && nextConvo.ended !== undefined) {
+                                this.checkIfAlreadyTransmitted(nextConvo.identifier, nextConvo.ended).then((transmitted:boolean) => {
+                                  if (nextConvo.ended !== undefined) {
+                                    if (transmitted) {
+                                      checkedRecords.push({
+                                        id: nextConvo.identifier,
+                                        refresh: false,
+                                        conversation: nextConvo,
+                                        lookupDate: nextConvo.ended
+                                      })
+                                    } else {
+                                      checkedRecords.push({
+                                        id: nextConvo.identifier,
+                                        refresh: true,
+                                        conversation: nextConvo,
+                                        lookupDate: nextConvo.ended
+                                      })
+                                    }
                                   }
-                                }
 
+                                  checkNextConversation()
+                                })
+                              } else {
                                 checkNextConversation()
-                              })
-                            } else {
-                              checkNextConversation()
-                            }
-                          })
+                              }
+                            })
+                          } catch (err) {
+                            reject(`Error encountered processing conversation: ${err}`)
+                          }
                         } else {
                           checkNextConversation()
                         }
@@ -246,12 +248,15 @@ export class REXGeminiSpider extends REXSpider {
 
                     checkNextConversation()
                   } else {
-                    this.signalCrawlComplete(-1, [], `Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
-                    
                     reject(`Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
                   }
                 })
+                .catch((err) => {
+                  reject(`Unable to retrieve body from ${chatsUrl}: ${err}.`)
+                })
               }
+            }).catch((err) => {
+              reject(`Unable to crawl ${chatsUrl}: ${err}.`)
             })
           } else {
             setTimeout(fetchNext, this.fetchCrawlDelay())
@@ -336,13 +341,19 @@ export class REXGeminiSpider extends REXSpider {
                                     ...conversation
                                   }
 
-                                  dispatchEvent(payload)
+                                  try {
+                                    dispatchEvent(payload)
 
-                                  dispatched += 1
+                                    dispatched += 1
 
-                                  this.logTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then(() => {
+                                    this.logTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then(() => {
+                                      processNextConversation()
+                                    })
+                                  } catch (err) {
+                                    console.log(`[rex-spider-gemini] Error transmitting data point: ${err}`)
+
                                     processNextConversation()
-                                  })
+                                  }
                                 } else {
                                   processNextConversation()
                                 }
