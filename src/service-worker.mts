@@ -49,6 +49,11 @@ export class REXGeminiSpider extends REXSpider {
               resolve(true)
             }
           })
+          .catch((err) => {
+            console.log(`[rex-spider-gemini] Error fetching login page text (${this.loginUrl()}): ${err}`)
+
+            resolve(false)
+          })
         } else {
           resolve(false)
         }
