@@ -2,15 +2,13 @@ import check from 'check-types'
 
 import { Conversation, DateString } from '@bric/rex-types/types'
 
-import rexCorePlugin, { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
+import { EventPayload, dispatchEvent } from '@bric/rex-core/service-worker'
 
-import rexSpiderPlugin, { REXSpider } from '@bric/rex-spider/service-worker'
+import rexSpiderPlugin, { REXSpider, REXSpiderCrawlResult, REXSpiderCrawlInspection } from '@bric/rex-spider/service-worker'
+
+const GEMINI_SPIDER_PAGE_SIZE = 10
 
 export class REXGeminiSpider extends REXSpider {
-  sleepDelayMs:number = 10000
-  syncing:boolean = false
-  lastSync:number = 0
-  syncPeriod:number = 300000
   accessToken:string|null = null
 
   fetchUrls(): string[] {
@@ -21,8 +19,19 @@ export class REXGeminiSpider extends REXSpider {
     return 'Gemini'
   }
 
+  identifier(): string {
+    return 'gemini'
+  }
+
   loginUrl(): string {
     return 'https://gemini.google.com/app'
+  }
+
+  allowedUrls():string[] {
+    return [
+      '^https://gemini.google.com/app$',
+      '^https://gemini.google.com/_/BardChatUi/data/batchexecute\\?.*',
+    ]
   }
 
   fetchInitialUrls(): string[] {
@@ -31,26 +40,85 @@ export class REXGeminiSpider extends REXSpider {
 
   checkLogin(): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      fetch(this.loginUrl())
-        .then((response: Response) => {
-          if (response.ok) {
-            response.text().then((rawHtml) => {
-              if (rawHtml.includes("<span class=\"gb_ie\">Sign in</span>")) {
-                  resolve(false)
-              } else {
-                resolve(true)
-              }
-            })
-          } else {
+      fetch(this.loginUrl()).then((response: Response) => {
+        if (response.ok) {
+          response.text().then((rawHtml) => {
+            if (rawHtml.includes("<span class=\"gb_ie\">Sign in</span>")) {
+                resolve(false)
+            } else {
+              resolve(true)
+            }
+          })
+          .catch((err) => {
+            console.log(`[rex-spider-gemini] Error fetching login page text (${this.loginUrl()}): ${err}`)
+
             resolve(false)
-          }
-        })
+          })
+        } else {
+          resolve(false)
+        }
+      }).catch((err) => {
+        console.log(`[rex-spider-gemini] Error fetching login page (${this.loginUrl()}): ${err}`)
+
+        resolve(false)
+      })
     })
   }
 
-  parseChatList(rawChatListData:string) : Conversation[] {
-    const parsed:Conversation[] = []
+  parseChatList(rawChatListData:string) : Conversation[] | null {
+    try {
+      if (rawChatListData.startsWith(')]}\'')) {
+        rawChatListData = rawChatListData.substring(4).trim()
+
+        const lines = rawChatListData.split(/\r?\n/)
+
+        const parsed:Conversation[] = []
+        let foundValidResponse:boolean = false
  
+        for (const line of lines) {
+          if (line.startsWith('[[')) {
+            const parsedLine = JSON.parse(line)
+
+            for (const message of parsedLine) {
+              if (message.length > 2 && message[1] === 'MaZiqc') {
+                foundValidResponse = true
+
+                const chatList = JSON.parse(message[2])
+
+                if (check.array(chatList[2])) {
+                  for (const chat of chatList[2]) {
+                    const conversation:Conversation = {
+                      identifier: chat[0],
+                      turns: [],
+                      platform: 'gemini',
+                      ended: new DateString(chat[5][0]),
+                      metadata: chat
+                    }
+
+                    parsed.push(conversation)
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (foundValidResponse) {
+          return parsed
+        }
+      }
+    } catch (err) {
+      console.error(`[rex-spider-gemini] Error parsing conversation:`)
+      console.error(err)
+    }
+
+    return null
+  }
+
+  fetchNextPageToken(rawChatListData:string) : string | null {
+    // Raw payload:
+    // [["wrb.fr","MaZiqc","[null,\"TOKEN\",[[CONVERSATIONS]]]", ...]]
+
     try {
       if (rawChatListData.startsWith(')]}\'')) {
         rawChatListData = rawChatListData.substring(4).trim()
@@ -65,19 +133,13 @@ export class REXGeminiSpider extends REXSpider {
               if (message.length > 2 && message[1] === 'MaZiqc') {
                 const chatList = JSON.parse(message[2])
 
-                if (check.array(chatList[2])) {
-                  for (const chat of chatList[2]) {
-                    const conversation:Conversation = {
-                      identifier: chat[0],
-                      turns: [],
-                      platform: 'google-ai-gemini',
-                      started: new DateString(chat[5][0]),
-                      metadata: chat
-                    }
+                // Return string serving as next page token.
 
-                    parsed.push(conversation)
-                  }
+                if (chatList.length > 2) {
+                  return chatList[1]
                 }
+
+                return null
               }
             }
           }
@@ -88,42 +150,28 @@ export class REXGeminiSpider extends REXSpider {
       console.error(err)
     }
 
-    return parsed
+    return null
   }
 
-  private signalComplete(crawledCount: number) {
-    setTimeout(() => {
-      dispatchEvent({
-        name: 'pdk-app-event',
-        event_name: 'rex-spider-gemini-complete',
-        event_details: {
-          crawled_count: crawledCount,
-          date: Date.now()
-        }
-      })
-    }, 1100)
-  }
-
-
-  fetchChats(): Promise<Conversation[]> {
-    return new Promise<Conversation[]>((resolve, reject) => {
+  fetchChats(): Promise<REXSpiderCrawlInspection[]> {
+    return new Promise<REXSpiderCrawlInspection[]>((resolve, reject) => {
       const requestId = Math.floor(Math.random() * (999999 - 10000)) + 10000
 
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
 
       const payloads = [{
-        'f.req': '[[["MaZiqc","[13,null,[0,null,1]]",null,"generic"]]]',
+        'f.req': `[[["MaZiqc","[${GEMINI_SPIDER_PAGE_SIZE},null,[0,null,1]]",null,"generic"]]]`,
         'at': (this.accessToken as string)
       }, {
-        'f.req': '[[["MaZiqc","[13,null,[1,null,1]]",null,"generic"]]]',
+        'f.req': `[[["MaZiqc","[${GEMINI_SPIDER_PAGE_SIZE},null,[1,null,1]]",null,"generic"]]]`,
         'at': (this.accessToken as string)
       }]
 
-      const chats:Conversation[] = []
+      const checkedRecords:REXSpiderCrawlInspection[] = []
 
       const fetchNext = () => {
-        if (payloads.length <= 0) {
-          resolve(chats)
+        if (payloads.length == 0) {
+          resolve(checkedRecords)
         } else {
           const nextPayload = payloads.pop()
 
@@ -137,26 +185,91 @@ export class REXGeminiSpider extends REXSpider {
               body: new URLSearchParams(nextPayload)
             }).then((response: Response) => {
               if (!response.ok) {
-                console.log(`[rex-spider-gemini] List fetch failed (status ${response.status}).`)
-                this.syncing = false
-                this.signalComplete(0)
                 reject(`List fetch failed (status ${response.status}).`)
               } else {
                 response.text().then((rawBody) => {
-                  const parsed = this.parseChatList(rawBody)
+                  const nextToken:string|null = this.fetchNextPageToken(rawBody)
 
-                  if (parsed !== null) {
-                    for (const chat of parsed) {
-                      chats.push(chat)
+                  if (nextToken !== null) {
+                    const newRequestWrapper = JSON.parse(nextPayload['f.req'])
+
+                    const newRequest = JSON.parse(newRequestWrapper[0][0][1])
+
+                    newRequest[1] = nextToken
+
+                    newRequestWrapper[0][0][1] = JSON.stringify(newRequest)
+
+                    const newPayload = {
+                      'at': nextPayload['at'],
+                      'f.req': JSON.stringify(newRequestWrapper)
                     }
+
+                    payloads.push(newPayload)
                   }
 
-                  fetchNext()
+                  const parsed:Conversation[] | null = this.parseChatList(rawBody)
+
+                  if (parsed !== null) {
+                    const checkNextConversation = () => {
+                      if (parsed.length === 0) {
+                        setTimeout(fetchNext, this.fetchCrawlDelay())
+                      } else {
+                        const nextConvo:Conversation | undefined = parsed.pop()
+
+                        if (nextConvo !== undefined && nextConvo.ended !== undefined) {
+                          try {
+                            this.crawlWindowContains(nextConvo.ended.timestamp()).then((include) => {
+                              if (include && nextConvo.ended !== undefined) {
+                                this.checkIfAlreadyTransmitted(nextConvo.identifier, nextConvo.ended).then((transmitted:boolean) => {
+                                  if (nextConvo.ended !== undefined) {
+                                    if (transmitted) {
+                                      checkedRecords.push({
+                                        id: nextConvo.identifier,
+                                        refresh: false,
+                                        conversation: nextConvo,
+                                        lookupDate: nextConvo.ended
+                                      })
+                                    } else {
+                                      checkedRecords.push({
+                                        id: nextConvo.identifier,
+                                        refresh: true,
+                                        conversation: nextConvo,
+                                        lookupDate: nextConvo.ended
+                                      })
+                                    }
+                                  }
+
+                                  checkNextConversation()
+                                })
+                              } else {
+                                checkNextConversation()
+                              }
+                            })
+                          } catch (err) {
+                            reject(`Error encountered processing conversation: ${err}`)
+                          }
+                        } else {
+                          checkNextConversation()
+                        }
+                      }
+                    }
+
+                    checkNextConversation()
+                  } else {
+                    nextPayload.at = '<redacted>'
+                    
+                    reject(`Received invalid response for conversation API. Request: ${JSON.stringify(nextPayload)}`)
+                  }
+                })
+                .catch((err) => {
+                  reject(`Unable to retrieve body from ${chatsUrl}: ${err}.`)
                 })
               }
+            }).catch((err) => {
+              reject(`Unable to crawl ${chatsUrl}: ${err}.`)
             })
           } else {
-            fetchNext()
+            setTimeout(fetchNext, this.fetchCrawlDelay())
           }        
         }
       }
@@ -165,142 +278,153 @@ export class REXGeminiSpider extends REXSpider {
     })
   }
 
-  checkNeedsUpdate(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      if (this.syncing) {
-        console.log(`[rex-spider-gemini] Still syncing. Skipping this round...`)
-        resolve(true)
-      } else {
-        const fetchLastSync = {
-          messageType: 'fetchValue',
-          key: 'rex-spider-gemini-last-sync'
-        }
+  doBackgroundCrawl():Promise<REXSpiderCrawlResult> {
+    return new Promise<REXSpiderCrawlResult>((resolve) => {
+      super.doBackgroundCrawl().then((crawlResult:REXSpiderCrawlResult) => {
+        const homeUrl = 'https://gemini.google.com/app'
 
-        rexCorePlugin.handleMessage(fetchLastSync, this, (response) => {
-          let timestamp = 0
+        fetch(homeUrl, {
+          method: 'GET',
+          credentials: 'include', // Crucial property to send cookies
+        }).then((response: Response) => {
+          const crawledIds:string[] = []
 
-          if (response !== null) {
-            timestamp = response
-          }
+          if (!response.ok) {
+            this.signalCrawlComplete(-1, [], `Homepage fetch failed (status ${response.status}).`)
 
-          if (Date.now() < timestamp + this.syncPeriod) {
-            console.log(`[rex-spider-gemini] Too soon to sync again. Skipping this round...`)
-            this.signalComplete(0)
-            resolve(true)
+            crawlResult.issues.push({
+              url: this.loginUrl(),
+              message: `Unable to fetch ${homeUrl}. Status code = ${response.status}.`
+            })
+
+            resolve(crawlResult)
           } else {
-            const storeMessage = {
-              messageType: 'storeValue',
-              key: 'rex-spider-gemini-last-sync',
-              value: Date.now()
-            }
+            response.text().then((rawHtml) => {
+              if (rawHtml.includes('"SNlM0e":"')) {
+                const startIndex = rawHtml.indexOf('"SNlM0e":"')
 
-            rexCorePlugin.handleMessage(storeMessage, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-              this.syncing = true
+                if (startIndex !== -1) {
+                  const prefixStripped = rawHtml.substring(startIndex)
 
-              const homeUrl = 'https://gemini.google.com/app'
+                  const tokens = prefixStripped.split('"')
 
-              fetch(homeUrl, {
-                method: 'GET',
-                credentials: 'include', // Crucial property to send cookies
-              }).then((response: Response) => {
-                if (!response.ok) {
-                  console.log(`[rex-spider-gemini] Homepage fetch failed (status ${response.status}).`)
+                  if (tokens.length > 3) {
+                    this.accessToken = tokens[3]
+                  }
+                }
 
-                  this.syncing = false
-                  this.signalComplete(0)
+                if (this.accessToken === null) {
+                  this.signalCrawlComplete(-1, [], `No access token found on homepage.`)
 
-                  resolve(true)
+                  crawlResult.issues.push({
+                    url: this.loginUrl(),
+                    message: `No access token found on homepage.`
+                  })
+
+                  resolve(crawlResult)
                 } else {
-                  response.text().then((rawHtml) => {
-                    if (rawHtml.includes('"SNlM0e":"')) {
-                      const startIndex = rawHtml.indexOf('"SNlM0e":"')
+                  this.fetchChats().then((inspectionRecords:REXSpiderCrawlInspection[]) => {
+                    let dispatched = 0
 
-                      if (startIndex !== -1) {
-                        const prefixStripped = rawHtml.substring(startIndex)
+                    const processNextConversation = () => {
+                      if (inspectionRecords.length <= 0) {
+                        this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
 
-                        const tokens = prefixStripped.split('"')
-
-                        if (tokens.length > 3) {
-                          this.accessToken = tokens[3]
-                        }
-                      }
-
-                      if (this.accessToken === null) {
-                        this.syncing = false
-                        this.signalComplete(0)
-
-                        resolve(true)
+                        resolve(crawlResult)
                       } else {
-                        this.fetchChats().then((chatList:Conversation[]) => {
-                          let dispatched = 0
+                        const inspectionRecord:REXSpiderCrawlInspection | undefined = inspectionRecords.pop()
 
-                          const uploadConversations = () => {
-                            if (chatList.length <= 0) {
-                              this.syncing = false
-                              this.signalComplete(dispatched)
-                              resolve(false)
-                            } else {
-                              const conversation = chatList.pop()
+                        if (inspectionRecord !== undefined && inspectionRecord.conversation !== undefined) {
+                          crawledIds.push(inspectionRecord.id)
 
-                              if (conversation !== undefined) {
-                                if (conversation.started.value !== null) {
+                          const conversation:Conversation = inspectionRecord.conversation
+
+                          if (conversation.ended !== undefined) {
+                            const ended:DateString = conversation.ended
+
+                            if (inspectionRecord.refresh) {
+                              this.checkIfAlreadyTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then((transmitted:boolean) => {
+                                if (transmitted === false && ended.value !== null) {
                                   const payload: EventPayload = {
                                     name: 'rex-conversation',
-                                    date: conversation.started.value.epochMilliseconds,
+                                    date: ended.value.epochMilliseconds,
                                     ...conversation
                                   }
 
-                                  const uploadKey = `rex-spider-gemini-upload-${conversation.identifier}-${conversation.started.toJSON()}`
+                                  try {
+                                    dispatchEvent(payload)
 
-                                  const fetchLastUpload = {
-                                    messageType: 'fetchValue',
-                                    key: uploadKey
+                                    dispatched += 1
+
+                                    this.logTransmitted(inspectionRecord.id, inspectionRecord.lookupDate).then(() => {
+                                      processNextConversation()
+                                    })
+                                  } catch (err) {
+                                    console.log(`[rex-spider-gemini] Error transmitting data point: ${err}`)
+
+                                    processNextConversation()
                                   }
-
-                                  rexCorePlugin.handleMessage(fetchLastUpload, this, (uploadValue) => {
-                                    if (uploadValue === null) {
-                                      dispatchEvent(payload)
-
-                                      dispatched += 1
-
-                                      const storeUpload = {
-                                        messageType: 'storeValue',
-                                        key: uploadKey,
-                                        value: Date.now()
-                                      }
-
-                                      rexCorePlugin.handleMessage(storeUpload, this, (response) => { // eslint-disable-line @typescript-eslint/no-unused-vars
-                                        uploadConversations()
-                                      })
-                                    } else {
-                                      uploadConversations()
-                                    }
-                                  })
+                                } else {
+                                  processNextConversation()
                                 }
-                              }
+                              })
+                            } else {
+                              processNextConversation()
                             }
+                          } else {
+                            processNextConversation()
                           }
-
-                          uploadConversations()
-                        })
+                        } else {
+                          processNextConversation()
+                        }
                       }
                     }
+
+                    processNextConversation()
+                  }).catch((err) => {
+                    this.signalCrawlComplete(-1, crawledIds, `Error encountered parsing conversations: ${err}.`)
+
+                    crawlResult.issues.push({
+                      url: this.loginUrl(),
+                      message: `Error encountered parsing conversations: ${err}.`
+                    })
+
+                    resolve(crawlResult)
                   })
                 }
-              })
-              .catch((err) => {
-                console.error(`[rex-spider-gemini] Error encountered fetching conversations:`)
-                console.error(err)
+              } else {
+                this.signalCrawlComplete(-1, crawledIds, `No access token found on homepage.`)
 
-                this.syncing = false
-                this.signalComplete(0)
+                crawlResult.issues.push({
+                  url: this.loginUrl(),
+                  message: `No access token found on homepage.`
+                })
 
-                resolve(true)
+                resolve(crawlResult)
+              }
+            })
+            .catch((err) => {
+              this.signalCrawlComplete(-1, crawledIds, `Error encountered fetching conversations: ${err}.`)
+
+              crawlResult.issues.push({
+                url: this.loginUrl(),
+                message: `Error fetching conversations: ${err}.`
               })
+
+              resolve(crawlResult)
             })
           }
+        }).catch((err) => {
+          this.signalCrawlComplete(-1, [], `Error encountered fetching network resource: ${err}.`)
+
+          crawlResult.issues.push({
+            url: this.loginUrl(),
+            message: `Error encountered fetching network resource: ${err}.`
+          })
+
+          resolve(crawlResult)
         })
-      }
+      })
     })
   }
 }
