@@ -184,8 +184,13 @@ export class REXGeminiSpider extends REXSpider {
               },        
               body: new URLSearchParams(nextPayload)
             }).then((response: Response) => {
-              if (!response.ok) {
-                reject(`List fetch failed (status ${response.status}).`)
+              if (!response.ok) { // TODO: Revert to correct code once cause of failure is understood.
+                if (checkedRecords.length === 0) {
+                  reject(`List fetch failed (status ${response.status}).`)
+                } else {
+                  console.log(`[rex-spider-gemini] Error parsing conversation list. Transmitting gathered conversations. Status code: ${response.status} - ${response.text}`)
+                  resolve(checkedRecords)
+                }
               } else {
                 response.text().then((rawBody) => {
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
