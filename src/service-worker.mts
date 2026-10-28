@@ -85,7 +85,7 @@ export class REXGeminiSpider extends REXSpider {
 
                 const chatList = JSON.parse(message[2])
 
-                if (check.array(chatList[2])) {
+                if (chatList !== null && check.array(chatList[2])) {
                   for (const chat of chatList[2]) {
                     const conversation:Conversation = {
                       identifier: chat[0],
