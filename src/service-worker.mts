@@ -175,7 +175,7 @@ export class REXGeminiSpider extends REXSpider {
         } else {
           const nextPayload = payloads.pop()
 
-          console.log('nextPayload')
+          console.log(`nextPayload. checkedRecords = ${checkedRecords.length}`)
           console.log(nextPayload)
 
           if (nextPayload !== undefined) {
