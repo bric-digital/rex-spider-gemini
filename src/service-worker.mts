@@ -119,6 +119,8 @@ export class REXGeminiSpider extends REXSpider {
     // Raw payload:
     // [["wrb.fr","MaZiqc","[null,\"TOKEN\",[[CONVERSATIONS]]]", ...]]
 
+    console.log(`rawChatListData: ${rawChatListData}`)
+
     try {
       if (rawChatListData.startsWith(')]}\'')) {
         rawChatListData = rawChatListData.substring(4).trim()
