@@ -175,7 +175,7 @@ export class REXGeminiSpider extends REXSpider {
         } else {
           const nextPayload = payloads.pop()
 
-          console.log(`nextPayload. checkedRecords = ${checkedRecords.length}`)
+          console.log(`nextPayload.checkedRecords = ${checkedRecords.length}`)
           console.log(nextPayload)
 
           if (nextPayload !== undefined) {
@@ -197,6 +197,11 @@ export class REXGeminiSpider extends REXSpider {
               } else {
                 response.text().then((rawBody) => {
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
+
+                  const now = new Date()
+
+                  console.log(`${now}: nextToken`)
+                  console.log(nextToken)
 
                   if (nextToken !== null) {
                     const newRequestWrapper = JSON.parse(nextPayload['f.req'])
