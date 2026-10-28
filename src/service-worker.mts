@@ -175,6 +175,9 @@ export class REXGeminiSpider extends REXSpider {
         } else {
           const nextPayload = payloads.pop()
 
+          console.log('nextPayload')
+          console.log(nextPayload)
+
           if (nextPayload !== undefined) {
             fetch(chatsUrl, {
               method: 'POST',
