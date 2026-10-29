@@ -155,8 +155,8 @@ export class REXGeminiSpider extends REXSpider {
     return null
   }
 
-  fetchChats(): Promise<REXSpiderCrawlInspection[]> {
-    return new Promise<REXSpiderCrawlInspection[]>((resolve, reject) => {
+  fetchChats(): Promise<[REXSpiderCrawlInspection[], boolean]> {
+    return new Promise<[REXSpiderCrawlInspection[], boolean]>((resolve, reject) => {
       const requestId = Math.floor(Math.random() * (999999 - 10000)) + 10000
 
       const chatsUrl = `https://gemini.google.com/_/BardChatUi/data/batchexecute?rpcids=MaZiqc&hl=en&rt=c&_reqid=${requestId}`
@@ -173,7 +173,7 @@ export class REXGeminiSpider extends REXSpider {
 
       const fetchNext = () => {
         if (payloads.length == 0) {
-          resolve(checkedRecords)
+          resolve([checkedRecords, true])
         } else {
           const nextPayload = payloads.pop()
 
@@ -191,13 +191,13 @@ export class REXGeminiSpider extends REXSpider {
                   reject(`List fetch failed (status ${response.status}).`)
                 } else {
                   console.log(`[rex-spider-gemini] Error parsing conversation list. Transmitting gathered conversations. Status code: ${response.status} - ${response.text}`)
-                  resolve(checkedRecords)
+                  resolve([checkedRecords, false])
                 }
               } else {
                 response.text().then((rawBody) => {
                   if (rawBody.includes('[["type.googleapis.com/assistant.boq.bard.application.BardErrorInfo",[1096]]')) {
                     console.log(`[rex-spider-gemini] Error parsing conversation list. Authorization has likely expired. (This will be fixed soon.)`)
-                    resolve(checkedRecords)
+                    resolve([checkedRecords, false])
 
                     return
                   }
@@ -339,12 +339,16 @@ export class REXGeminiSpider extends REXSpider {
 
                   resolve(crawlResult)
                 } else {
-                  this.fetchChats().then((inspectionRecords:REXSpiderCrawlInspection[]) => {
+                  this.fetchChats().then(([inspectionRecords, complete]) => {
                     let dispatched = 0
 
                     const processNextConversation = () => {
                       if (inspectionRecords.length <= 0) {
-                        this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
+                        if (complete) {
+                          this.signalCrawlComplete(dispatched, crawledIds, 'Fetch successful.')
+                        } else {
+                          this.signalCrawlComplete(dispatched, crawledIds, 'Full fetch unsuccessful. Partial results returned.')
+                        }
 
                         resolve(crawlResult)
                       } else {
