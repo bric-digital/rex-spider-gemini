@@ -119,7 +119,7 @@ export class REXGeminiSpider extends REXSpider {
     // Raw payload:
     // [["wrb.fr","MaZiqc","[null,\"TOKEN\",[[CONVERSATIONS]]]", ...]]
 
-    console.log(`rawChatListData: ${rawChatListData}`)
+    // console.log(`rawChatListData: ${rawChatListData}`)
 
     try {
       if (rawChatListData.startsWith(')]}\'')) {
@@ -177,9 +177,6 @@ export class REXGeminiSpider extends REXSpider {
         } else {
           const nextPayload = payloads.pop()
 
-          console.log(`nextPayload.checkedRecords = ${checkedRecords.length}`)
-          console.log(nextPayload)
-
           if (nextPayload !== undefined) {
             fetch(chatsUrl, {
               method: 'POST',
@@ -198,12 +195,16 @@ export class REXGeminiSpider extends REXSpider {
                 }
               } else {
                 response.text().then((rawBody) => {
+                  if (rawBody.includes('[["type.googleapis.com/assistant.boq.bard.application.BardErrorInfo",[1096]]')) {
+                    console.log(`[rex-spider-gemini] Error parsing conversation list. Authorization has likely expired. (This will be fixed soon.)`)
+                    resolve(checkedRecords)
+
+                    return
+                  }
+
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
 
                   const now = new Date()
-
-                  console.log(`${now}: nextToken`)
-                  console.log(nextToken)
 
                   if (nextToken !== null) {
                     const newRequestWrapper = JSON.parse(nextPayload['f.req'])
