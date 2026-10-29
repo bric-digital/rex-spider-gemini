@@ -186,7 +186,7 @@ export class REXGeminiSpider extends REXSpider {
               },        
               body: new URLSearchParams(nextPayload)
             }).then((response: Response) => {
-              if (!response.ok) { // TODO: Revert to correct code once cause of failure is understood.
+              if (!response.ok) {
                 if (checkedRecords.length === 0) {
                   reject(`List fetch failed (status ${response.status}).`)
                 } else {
@@ -203,8 +203,6 @@ export class REXGeminiSpider extends REXSpider {
                   }
 
                   const nextToken:string|null = this.fetchNextPageToken(rawBody)
-
-                  const now = new Date()
 
                   if (nextToken !== null) {
                     const newRequestWrapper = JSON.parse(nextPayload['f.req'])
